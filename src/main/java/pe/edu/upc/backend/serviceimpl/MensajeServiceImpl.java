@@ -2,119 +2,131 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.MensajeDTO;
+import pe.edu.upc.backend.entities.Anuncio;
 import pe.edu.upc.backend.entities.Mensaje;
+import pe.edu.upc.backend.entities.User;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
+import pe.edu.upc.backend.repositories.AnuncioRepository;
 import pe.edu.upc.backend.repositories.MensajeRepository;
+import pe.edu.upc.backend.repositories.UserRepository;
 import pe.edu.upc.backend.services.MensajeService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MensajeServiceImpl implements MensajeService {
 
     @Autowired
     private MensajeRepository mensajeRepository;
+    @Autowired
+    private AnuncioRepository anuncioRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    // ----------------------------------------------------
-    // CRUD
-    // ----------------------------------------------------
+    // --- Mappers ---
+    private MensajeDTO toDTO(Mensaje mensaje) {
+        if (mensaje == null) return null;
+        MensajeDTO dto = new MensajeDTO();
+        dto.setId(mensaje.getId());
+        dto.setTexto(mensaje.getTexto());
+        dto.setFechaEnvio(mensaje.getFechaEnvio());
+
+        if (mensaje.getAnuncio() != null) dto.setAnuncioId(mensaje.getAnuncio().getId());
+        if (mensaje.getUsuario() != null) dto.setUsuarioId(mensaje.getUsuario().getId());
+
+        return dto;
+    }
+
+    private Mensaje toEntity(MensajeDTO dto) {
+        Mensaje mensaje = new Mensaje();
+        mensaje.setTexto(dto.getTexto());
+
+        if(dto.getFechaEnvio() != null) mensaje.setFechaEnvio(dto.getFechaEnvio());
+        else mensaje.setFechaEnvio(LocalDate.now());
+
+        if (dto.getAnuncioId() != null) {
+            Anuncio anuncio = anuncioRepository.findById(dto.getAnuncioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Anuncio no encontrado id: " + dto.getAnuncioId()));
+            mensaje.setAnuncio(anuncio);
+        }
+        if (dto.getUsuarioId() != null) {
+            User user = userRepository.findById(dto.getUsuarioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado id: " + dto.getUsuarioId()));
+            mensaje.setUsuario(user);
+        }
+        return mensaje;
+    }
+
+    private List<MensajeDTO> toDTOList(List<Mensaje> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // --- CRUD ---
+    @Override
+    public MensajeDTO add(MensajeDTO dto) {
+        if (dto.getTexto() == null || dto.getTexto().isBlank()) {
+            throw new RequiredDataException("El texto es obligatorio.");
+        }
+        if (dto.getAnuncioId() == null || dto.getUsuarioId() == null) {
+            throw new RequiredDataException("El mensaje debe tener anuncio y usuario.");
+        }
+
+        Mensaje mensaje = toEntity(dto);
+        return toDTO(mensajeRepository.save(mensaje));
+    }
 
     @Override
-    public Mensaje add(Mensaje mensaje) {
+    public MensajeDTO update(Long id, MensajeDTO dto) {
+        Mensaje msg = mensajeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Mensaje no encontrado id: " + id));
 
-        // Validación de campos requeridos
-        if (mensaje.getTexto() == null || mensaje.getTexto().isBlank()) {
-            throw new RequiredDataException("El texto del mensaje no puede ser nulo o vacío.");
-        }
-        if (mensaje.getAnuncio() == null) {
-            throw new RequiredDataException("El mensaje debe estar asociado a un anuncio.");
-        }
-        if (mensaje.getUsuario() == null) {
-            throw new RequiredDataException("El mensaje debe estar asociado a un usuario.");
-        }
+        msg.setTexto(dto.getTexto());
+        if(dto.getFechaEnvio() != null) msg.setFechaEnvio(dto.getFechaEnvio());
 
-        return mensajeRepository.save(mensaje);
+        // No solemos cambiar el usuario o anuncio de un mensaje ya enviado,
+        // pero si lo necesitas, añade la lógica aquí similar a add()
+
+        return toDTO(mensajeRepository.save(msg));
     }
 
     @Override
     public void delete(Long id) {
-        Mensaje mensajeFound = findById(id);
-
-        if (mensajeFound == null) {
-            throw new ResourceNotFoundException("No se encontró el mensaje con id: " + id);
-        }
-
+        if(!mensajeRepository.existsById(id)) throw new ResourceNotFoundException("Mensaje no encontrado id: " + id);
         mensajeRepository.deleteById(id);
     }
 
     @Override
-    public Mensaje findById(Long id) {
-        return mensajeRepository.findById(id).orElse(null);
+    public MensajeDTO findById(Long id) {
+        return toDTO(mensajeRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Mensaje> listAll() {
-        return mensajeRepository.findAll();
+    public List<MensajeDTO> listAll() {
+        return toDTOList(mensajeRepository.findAll());
+    }
+
+    // --- Queries ---
+    @Override
+    public List<MensajeDTO> findByAnuncioId(Long anuncioId) {
+        return toDTOList(mensajeRepository.findByAnuncio_Id(anuncioId));
     }
 
     @Override
-    public Mensaje edit(Mensaje mensaje) {
-
-        Mensaje mensajeFound = findById(mensaje.getId());
-        if (mensajeFound == null) {
-            return null;
-        }
-
-        // Actualización de atributos
-        if (mensaje.getTexto() != null && !mensaje.getTexto().isBlank()) {
-            mensajeFound.setTexto(mensaje.getTexto());
-        }
-
-        if (mensaje.getFechaEnvio() != null) {
-            mensajeFound.setFechaEnvio(mensaje.getFechaEnvio());
-        }
-
-        if (mensaje.getAnuncio() != null) {
-            mensajeFound.setAnuncio(mensaje.getAnuncio());
-        }
-
-        if (mensaje.getUsuario() != null) {
-            mensajeFound.setUsuario(mensaje.getUsuario());
-        }
-
-        return mensajeRepository.save(mensajeFound);
-    }
-
-    // ----------------------------------------------------
-    // Query Methods
-    // ----------------------------------------------------
-
-    @Override
-    public List<Mensaje> findByAnuncioId(Long anuncioId) {
-        return mensajeRepository.findByAnuncio_Id(anuncioId);
+    public List<MensajeDTO> findByUsuarioId(Long usuarioId) {
+        return toDTOList(mensajeRepository.findByUsuario_Id(usuarioId));
     }
 
     @Override
-    public List<Mensaje> findByUsuarioId(Long usuarioId) {
-        return mensajeRepository.findByUsuario_Id(usuarioId);
+    public List<MensajeDTO> findByAnuncioSQL(Long anuncioId) {
+        return toDTOList(mensajeRepository.findByAnuncioSQL(anuncioId));
     }
 
-    // ----------------------------------------------------
-    // SQL Nativo
-    // ----------------------------------------------------
-
     @Override
-    public List<Mensaje> findByAnuncioSQL(Long anuncioId) {
-        return mensajeRepository.findByAnuncioSQL(anuncioId);
-    }
-
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
-    @Override
-    public List<Mensaje> findByAnuncioJPQL(Long anuncioId) {
-        return mensajeRepository.findByAnuncioJPQL(anuncioId);
+    public List<MensajeDTO> findByAnuncioJPQL(Long anuncioId) {
+        return toDTOList(mensajeRepository.findByAnuncioJPQL(anuncioId));
     }
 }
