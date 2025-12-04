@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+
 import pe.edu.upc.backend.dtos.DTOUser;
 import pe.edu.upc.backend.entities.*;
 import pe.edu.upc.backend.repositories.*;
@@ -43,34 +44,34 @@ public class BackendApplication {
 
             // Solo dos roles: ADMIN y USER
             Authority roleAdmin = authorityService.add(new Authority(null, "ROLE_ADMIN", null));
-            Authority roleArtista  = authorityService.add(new Authority(null, "ROLE_ARTISTA", null));
+            Authority roleArtista  = authorityService.add(new Authority(null, "ROLE_Artista", null));
             Authority roleRestaurante  = authorityService.add(new Authority(null, "ROLE_RESTAURANTE", null));
 
             // Usuarios de prueba
             // admin -> ROLE_ADMIN;ROLE_USER
-            userService.add(new DTOUser(null, "admin", "admin123", "ROLE_ADMIN;ROLE_ARTISTA"));
+            userService.add(new DTOUser(null, "admin", "admin123", "ROLE_ADMIN;ROLE_Artista"));
 
             // user -> ROLE_USER
-            userService.add(new DTOUser(null, "user", "user123", "ROLE_ARTISTA"));
+            userService.add(new DTOUser(null, "user", "user123", "ROLE_Artista"));
 
             // ----------------------------------------------------
             // DATOS INICIALES DRINKS N' TUNES
             // ----------------------------------------------------
 
             // 1) Artistas
-            Artista artista1 = new Artista();
-            artista1.setNombreArtistico("The Sunset Waves");
-            artista1.setGeneroPrincipal("Rock");
-            artista1.setBio("Banda de rock alternativo de Lima.");
-            artista1.setCiudad("Lima");
-            artista1 = artistaRepository.save(artista1);
+            Artista Artista1 = new Artista();
+            Artista1.setNombreArtistico("The Sunset Waves");
+            Artista1.setGeneroPrincipal("Rock");
+            Artista1.setBio("Banda de rock alternativo de Lima.");
+            Artista1.setCiudad("Lima");
+            Artista1 = artistaRepository.save(Artista1);
 
-            Artista artista2 = new Artista();
-            artista2.setNombreArtistico("Latin Groove Band");
-            artista2.setGeneroPrincipal("Salsa");
-            artista2.setBio("Fusión de salsa y latin jazz.");
-            artista2.setCiudad("Barranco");
-            artista2 = artistaRepository.save(artista2);
+            Artista Artista2 = new Artista();
+            Artista2.setNombreArtistico("Latin Groove Band");
+            Artista2.setGeneroPrincipal("Salsa");
+            Artista2.setBio("Fusión de salsa y latin jazz.");
+            Artista2.setCiudad("Barranco");
+            Artista2 = artistaRepository.save(Artista2);
 
             // 2) Restaurantes
             Restaurante restaurante1 = new Restaurante();
@@ -93,7 +94,7 @@ public class BackendApplication {
             evento1.setCachet("1500 USD");
             evento1.setRealizado(false);
             evento1.setFechaCreacion(LocalDate.of(2025, 11, 1));
-            evento1.setArtista(artista1);
+            evento1.setArtista(Artista1);
             evento1.setRestaurante(restaurante1);
             evento1 = eventoRepository.save(evento1);
 
@@ -102,7 +103,7 @@ public class BackendApplication {
             evento2.setCachet("2000 USD");
             evento2.setRealizado(false);
             evento2.setFechaCreacion(LocalDate.of(2025, 11, 5));
-            evento2.setArtista(artista2);
+            evento2.setArtista(Artista2);
             evento2.setRestaurante(restaurante2);
             evento2 = eventoRepository.save(evento2);
 
@@ -144,14 +145,14 @@ public class BackendApplication {
             mensaje2.setFechaEnvio(LocalDate.of(2025, 11, 6));
             mensaje2.setAnuncio(anuncio2);
             mensaje2 = mensajeRepository.save(mensaje2);
-
-            // 6) Postulaciones
+//
+//            // 6) Postulaciones
             Postulacion postulacion1 = new Postulacion();
             postulacion1.setMensaje("Nos gustaría tocar en su bar, tenemos repertorio acústico.");
             postulacion1.setAceptada(false);
             postulacion1.setFechaPostulacion(LocalDate.of(2025, 11, 7));
             postulacion1.setAnuncio(anuncio1);
-            postulacion1.setArtista(artista1);
+            postulacion1.setArtista(Artista1);
             postulacion1 = postulacionRepository.save(postulacion1);
 
             Postulacion postulacion2 = new Postulacion();
@@ -159,7 +160,7 @@ public class BackendApplication {
             postulacion2.setAceptada(false);
             postulacion2.setFechaPostulacion(LocalDate.of(2025, 11, 8));
             postulacion2.setAnuncio(anuncio2);
-            postulacion2.setArtista(artista2);
+            postulacion2.setArtista(Artista2);
             postulacion2 = postulacionRepository.save(postulacion2);
 
             // 7) Reseñas
@@ -168,7 +169,7 @@ public class BackendApplication {
             resenia1.setComentario("Gran presentación, el público encantado.");
             resenia1.setFechaResenia(LocalDate.of(2025, 12, 16));
             resenia1.setEvento(evento1);
-            resenia1.setArtista(artista1);
+            resenia1.setArtista(Artista1);
             resenia1.setRestaurante(restaurante1);
             resenia1 = reseniaRepository.save(resenia1);
 
@@ -177,7 +178,7 @@ public class BackendApplication {
             resenia2.setComentario("Buen ambiente, buen ritmo, se puede mejorar el sonido.");
             resenia2.setFechaResenia(LocalDate.of(2026, 1, 11));
             resenia2.setEvento(evento2);
-            resenia2.setArtista(artista2);
+            resenia2.setArtista(Artista2);
             resenia2.setRestaurante(restaurante2);
             resenia2 = reseniaRepository.save(resenia2);
 
@@ -211,7 +212,7 @@ public class BackendApplication {
             portafolio1.setTipo("VIDEO");
             portafolio1.setUrl("https://youtube.com/live-sunset-waves");
             portafolio1.setFechaCreacion(LocalDate.of(2025, 10, 20));
-            portafolio1.setArtista(artista1);
+            portafolio1.setArtista(Artista1);
             portafolio1 = portafolioRepository.save(portafolio1);
 
             Portafolio portafolio2 = new Portafolio();
@@ -219,28 +220,28 @@ public class BackendApplication {
             portafolio2.setTipo("AUDIO");
             portafolio2.setUrl("https://soundcloud.com/latin-groove");
             portafolio2.setFechaCreacion(LocalDate.of(2025, 9, 15));
-            portafolio2.setArtista(artista2);
+            portafolio2.setArtista(Artista2);
             portafolio2 = portafolioRepository.save(portafolio2);
 
             // ----------------------------------------------------
             // ADICIONES PARA PROBAR LAS QUERYS
             // ----------------------------------------------------
 
-            // ------------------ ARTISTAS EXTRA ------------------
+            // ------------------ ArtistaS EXTRA ------------------
 
-            Artista artista3 = new Artista();
-            artista3.setNombreArtistico("Electro Vibes");
-            artista3.setGeneroPrincipal("Electronica");
-            artista3.setBio("DJ de música electrónica con 10 años de experiencia.");
-            artista3.setCiudad("Surco");
-            artista3 = artistaRepository.save(artista3);
+            Artista Artista3 = new Artista();
+            Artista3.setNombreArtistico("Electro Vibes");
+            Artista3.setGeneroPrincipal("Electronica");
+            Artista3.setBio("DJ de música electrónica con 10 años de experiencia.");
+            Artista3.setCiudad("Surco");
+            Artista3 = artistaRepository.save(Artista3);
 
-            Artista artista4 = new Artista();
-            artista4.setNombreArtistico("Acoustic Duo");
-            artista4.setGeneroPrincipal("Acústico");
-            artista4.setBio("Dúo acústico especializado en covers suaves.");
-            artista4.setCiudad("Miraflores");
-            artista4 = artistaRepository.save(artista4);
+            Artista Artista4 = new Artista();
+            Artista4.setNombreArtistico("Acoustic Duo");
+            Artista4.setGeneroPrincipal("Acústico");
+            Artista4.setBio("Dúo acústico especializado en covers suaves.");
+            Artista4.setCiudad("Miraflores");
+            Artista4 = artistaRepository.save(Artista4);
 
 
             // ------------------ RESTAURANTES EXTRA ------------------
@@ -260,7 +261,7 @@ public class BackendApplication {
             evento3.setCachet("2500 USD");
             evento3.setRealizado(false);
             evento3.setFechaCreacion(LocalDate.of(2025, 12, 20));
-            evento3.setArtista(artista3);
+            evento3.setArtista(Artista3);
             evento3.setRestaurante(restaurante3);
             eventoRepository.save(evento3);
 
@@ -296,7 +297,7 @@ public class BackendApplication {
             postulacion3.setAceptada(false);
             postulacion3.setFechaPostulacion(LocalDate.of(2025, 12, 23));
             postulacion3.setAnuncio(anuncio3);
-            postulacion3.setArtista(artista3);
+            postulacion3.setArtista(Artista3);
             postulacionRepository.save(postulacion3);
 
 
@@ -307,7 +308,7 @@ public class BackendApplication {
             resenia3.setComentario("Buena energía pero problemas con el sonido.");
             resenia3.setFechaResenia(LocalDate.of(2026, 5, 21));
             resenia3.setEvento(evento3);
-            resenia3.setArtista(artista3);
+            resenia3.setArtista(Artista3);
             resenia3.setRestaurante(restaurante3);
             reseniaRepository.save(resenia3);
 
@@ -340,7 +341,7 @@ public class BackendApplication {
             portafolio3.setTipo("VIDEO");
             portafolio3.setUrl("https://youtube.com/electrovibes-set");
             portafolio3.setFechaCreacion(LocalDate.of(2025, 12, 20));
-            portafolio3.setArtista(artista3);
+            portafolio3.setArtista(Artista3);
             portafolioRepository.save(portafolio3);
 
 

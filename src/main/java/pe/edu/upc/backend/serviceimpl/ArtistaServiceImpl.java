@@ -27,86 +27,115 @@ public class ArtistaServiceImpl implements ArtistaService {
     // ----------------------------------------------------
 
     @Override
-    public ArtistaDTO add(ArtistaDTO artista) {
+    public ArtistaDTO add(ArtistaDTO artistaDTO) {
 
-        // Validación de campos obligatorios
-        if (artista.getNombreArtistico() == null || artista.getNombreArtistico().isBlank()) {
+        // 1. Validaciones
+        if (artistaDTO.getNombreArtistico() == null || artistaDTO.getNombreArtistico().isBlank()) {
             throw new RequiredDataException("El nombre artístico no puede ser nulo o vacío.");
         }
-        if (artista.getGeneroPrincipal() == null || artista.getGeneroPrincipal().isBlank()) {
+        if (artistaDTO.getGeneroPrincipal() == null || artistaDTO.getGeneroPrincipal().isBlank()) {
             throw new RequiredDataException("El género principal no puede ser nulo o vacío.");
         }
-        if (artista.getCiudad() == null || artista.getCiudad().isBlank()) {
+        if (artistaDTO.getCiudad() == null || artistaDTO.getCiudad().isBlank()) {
             throw new RequiredDataException("La ciudad no puede ser nula o vacía.");
         }
 
-        // Persistencia del registro
-        System.out.println(artista.getNombreArtistico());
+        // 2. Mapeo Manual: DTO -> Entidad
+        // (Creamos la entidad que se guardará en BD)
+        Artista artista = new Artista();
+        artista.setNombreArtistico(artistaDTO.getNombreArtistico());
+        artista.setGeneroPrincipal(artistaDTO.getGeneroPrincipal());
+        artista.setBio(artistaDTO.getBio());
+        artista.setCiudad(artistaDTO.getCiudad());
 
-        Artista artistaentidad = new Artista();
-        artistaentidad.setBio(artista.getBio());
-        artistaentidad.setNombreArtistico(artista.getNombreArtistico());
-        artistaentidad.setGeneroPrincipal(artista.getGeneroPrincipal());
-        artistaentidad.setCiudad(artista.getCiudad());
-        Optional<User> usuario = userRepository.findById(artistaentidad.getId());
-        artistaentidad.setUsuario(usuario.get());
-        Artista artistaresponce =artistaRepository.save(artistaentidad);
-        artista.setId(artistaresponce.getId());
-        return artista;
+        // 3. Asignar Usuario (Corrección del bug)
+        // Buscamos el usuario usando el ID que viene en el DTO
+        if (artistaDTO.getUsuarioId() != null) {
+            userRepository.findById(artistaDTO.getUsuarioId())
+                    .ifPresent(usuario -> artista.setUsuario(usuario));
+        }
 
+        // 4. Guardar en Base de Datos
+        Artista artistaGuardado = artistaRepository.save(artista);
+
+        // 5. Retornar convertido a DTO (Usando tu función auxiliar)
+        return convertirADTO(artistaGuardado);
     }
 
     @Override
     public void delete(Long id) {
-        Artista artistaFound = findById(id);
-        if (artistaFound == null) {
+        // Verificamos si existe directamente en la base de datos
+        if (!artistaRepository.existsById(id)) {
             throw new ResourceNotFoundException("No se encontró el artista con id: " + id);
         }
-
-        // Eliminación del registro
+        // Si existe, lo borramos
         artistaRepository.deleteById(id);
     }
 
     @Override
-    public Artista findById(Long id) {
-        return artistaRepository.findById(id).orElse(null);
-    }
+    public ArtistaDTO findById(Long id) {
+        // Buscamos la entidad en la BD
+        Artista artista = artistaRepository.findById(id).orElse(null);
 
-    @Override
-    public List<Artista> listAll() {
-        return artistaRepository.findAll();
-    }
-
-    @Override
-    public Artista edit(Artista artista) {
-
-        Artista artistaFound = findById(artista.getId());
-        if (artistaFound == null) {
+        // Si no existe, devolvemos null
+        if (artista == null) {
             return null;
         }
 
-        // Actualización de valores proporcionados
-        if (artista.getNombreArtistico() != null && !artista.getNombreArtistico().isBlank()) {
-            artistaFound.setNombreArtistico(artista.getNombreArtistico());
+        // Si existe, la convertimos a DTO y la devolvemos
+        return convertirADTO(artista);
+    }
+
+    @Override
+    public List<ArtistaDTO> listAll() {
+        // Obtenemos la lista de entidades (Artista)
+        List<Artista> listaEntidades = artistaRepository.findAll();
+
+        // Transformamos cada entidad a DTO usando el método auxiliar
+        return listaEntidades.stream()
+                .map(this::convertirADTO)
+                .toList();
+    }
+
+    @Override
+    public ArtistaDTO edit(ArtistaDTO infoUpdate) {
+        // 1. Buscamos la ENTIDAD REAL en la base de datos (no el DTO)
+        Artista artista = artistaRepository.findById(infoUpdate.getId()).orElse(null);
+
+        // Si no existe, retornamos null
+        if (artista == null) {
+            return null;
         }
 
-        if (artista.getGeneroPrincipal() != null && !artista.getGeneroPrincipal().isBlank()) {
-            artistaFound.setGeneroPrincipal(artista.getGeneroPrincipal());
+        // 2. Actualizamos los campos de la entidad con los datos del DTO
+        if (infoUpdate.getNombreArtistico() != null && !infoUpdate.getNombreArtistico().isBlank()) {
+            artista.setNombreArtistico(infoUpdate.getNombreArtistico());
         }
 
-        if (artista.getBio() != null && !artista.getBio().isBlank()) {
-            artistaFound.setBio(artista.getBio());
+        if (infoUpdate.getGeneroPrincipal() != null && !infoUpdate.getGeneroPrincipal().isBlank()) {
+            artista.setGeneroPrincipal(infoUpdate.getGeneroPrincipal());
         }
 
-        if (artista.getCiudad() != null && !artista.getCiudad().isBlank()) {
-            artistaFound.setCiudad(artista.getCiudad());
+        if (infoUpdate.getBio() != null && !infoUpdate.getBio().isBlank()) {
+            artista.setBio(infoUpdate.getBio());
         }
 
-        if (artista.getUsuario() != null) {
-            artistaFound.setUsuario(artista.getUsuario());
+        if (infoUpdate.getCiudad() != null && !infoUpdate.getCiudad().isBlank()) {
+            artista.setCiudad(infoUpdate.getCiudad());
         }
 
-        return artistaRepository.save(artistaFound);
+        // Actualizamos el usuario (si viene en el DTO)
+        if (infoUpdate.getUsuarioId() != null) {
+            userRepository.findById(infoUpdate.getUsuarioId()).ifPresent(user -> {
+                artista.setUsuario(user);
+            });
+        }
+
+        // 3. Guardamos la entidad actualizada
+        Artista artistaGuardado = artistaRepository.save(artista);
+
+        // 4. Retornamos el DTO actualizado
+        return convertirADTO(artistaGuardado);
     }
 
     // ----------------------------------------------------
@@ -114,27 +143,39 @@ public class ArtistaServiceImpl implements ArtistaService {
     // ----------------------------------------------------
 
     @Override
-    public List<Artista> findByGeneroPrincipal(String genero) {
-        return artistaRepository.findByGeneroPrincipal(genero);
+    public List<ArtistaDTO> findByGeneroPrincipal(String genero) {
+        // 1. Obtener lista de entidades del repo
+        List<Artista> listaEntidades = artistaRepository.findByGeneroPrincipal(genero);
+
+        // 2. Convertir usando nuestro método auxiliar
+        return listaEntidades.stream().map(this::convertirADTO).toList(); // Referencia al método privado
     }
 
     @Override
-    public List<Artista> findByCiudad(String ciudad) {
-        return artistaRepository.findByCiudad(ciudad);
+    public List<ArtistaDTO> findByCiudad(String ciudad) {
+        List<Artista> listaEntidades = artistaRepository.findByCiudad(ciudad);
+        return listaEntidades.stream()
+                .map(this::convertirADTO)
+                .toList();
     }
 
     @Override
-    public List<Artista> findByUsuarioId(Long usuarioId) {
-        return artistaRepository.findByUsuario_Id(usuarioId);
+    public List<ArtistaDTO> findByUsuarioId(Long usuarioId) {
+        List<Artista> listaEntidades = artistaRepository.findByUsuario_Id(usuarioId);
+        return listaEntidades.stream()
+                .map(this::convertirADTO)
+                .toList();
     }
-
     // ----------------------------------------------------
     // SQL Nativo
     // ----------------------------------------------------
 
     @Override
-    public List<Artista> findByCiudadSQL(String ciudad) {
-        return artistaRepository.findByCiudadSQL(ciudad);
+    public List<ArtistaDTO> findByCiudadSQL(String ciudad) {
+        List<Artista> listaEntidades = artistaRepository.findByCiudadSQL(ciudad);
+        return listaEntidades.stream()
+                .map(this::convertirADTO)
+                .toList();
     }
 
     // ----------------------------------------------------
@@ -142,7 +183,25 @@ public class ArtistaServiceImpl implements ArtistaService {
     // ----------------------------------------------------
 
     @Override
-    public List<Artista> findByCiudadJPQL(String ciudad) {
-        return artistaRepository.findByCiudadJPQL(ciudad);
+    public List<ArtistaDTO> findByCiudadJPQL(String ciudad) {
+        List<Artista> listaEntidades = artistaRepository.findByCiudadJPQL(ciudad);
+        return listaEntidades.stream()
+                .map(this::convertirADTO)
+                .toList();
+    }
+
+    // Método auxiliar para no repetir código
+    private ArtistaDTO convertirADTO(Artista artista) {
+        ArtistaDTO dto = new ArtistaDTO();
+        dto.setId(artista.getId());
+        dto.setNombreArtistico(artista.getNombreArtistico());
+        dto.setGeneroPrincipal(artista.getGeneroPrincipal());
+        dto.setBio(artista.getBio());
+        dto.setCiudad(artista.getCiudad());
+
+        if (artista.getUsuario() != null) {
+            dto.setUsuarioId(artista.getUsuario().getId());
+        }
+        return dto;
     }
 }
