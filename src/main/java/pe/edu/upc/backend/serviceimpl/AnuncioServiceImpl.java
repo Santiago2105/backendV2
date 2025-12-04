@@ -2,106 +2,135 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.AnuncioDTO;
 import pe.edu.upc.backend.entities.Anuncio;
+import pe.edu.upc.backend.entities.Evento;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
 import pe.edu.upc.backend.repositories.AnuncioRepository;
+import pe.edu.upc.backend.repositories.EventoRepository;
 import pe.edu.upc.backend.services.AnuncioService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AnuncioServiceImpl implements AnuncioService {
 
     @Autowired
     private AnuncioRepository anuncioRepository;
+    @Autowired
+    private EventoRepository eventoRepository;
+
+    // ----------------------------------------------------
+    // Mappers
+    // ----------------------------------------------------
+
+    private AnuncioDTO toDTO(Anuncio anuncio) {
+        if (anuncio == null) return null;
+        AnuncioDTO dto = new AnuncioDTO();
+        dto.setId(anuncio.getId());
+        dto.setTitulo(anuncio.getTitulo());
+        dto.setDescripcion(anuncio.getDescripcion());
+        dto.setGeneroBuscado(anuncio.getGeneroBuscado());
+        dto.setFechaEvento(anuncio.getFechaEvento());
+        dto.setUbicacion(anuncio.getUbicacion());
+        dto.setPresupuesto(anuncio.getPresupuesto());
+        dto.setActivo(anuncio.isActivo());
+        dto.setFechaCreacion(anuncio.getFechaCreacion());
+
+        if (anuncio.getEvento() != null) {
+            dto.setEventoId(anuncio.getEvento().getId());
+        }
+        return dto;
+    }
+
+    private Anuncio toEntity(AnuncioDTO dto) {
+        Anuncio anuncio = new Anuncio();
+        anuncio.setTitulo(dto.getTitulo());
+        anuncio.setDescripcion(dto.getDescripcion());
+        anuncio.setGeneroBuscado(dto.getGeneroBuscado());
+        anuncio.setFechaEvento(dto.getFechaEvento());
+        anuncio.setUbicacion(dto.getUbicacion());
+        anuncio.setPresupuesto(dto.getPresupuesto());
+        anuncio.setActivo(dto.isActivo());
+
+        if(dto.getFechaCreacion() != null) {
+            anuncio.setFechaCreacion(dto.getFechaCreacion());
+        } else {
+            anuncio.setFechaCreacion(LocalDate.now());
+        }
+
+        if (dto.getEventoId() != null) {
+            Evento evento = eventoRepository.findById(dto.getEventoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado id: " + dto.getEventoId()));
+            anuncio.setEvento(evento);
+        }
+        return anuncio;
+    }
+
+    private List<AnuncioDTO> toDTOList(List<Anuncio> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
 
     // ----------------------------------------------------
     // CRUD
     // ----------------------------------------------------
 
     @Override
-    public Anuncio add(Anuncio anuncio) {
-
-        // Validación de campos requeridos
-        if (anuncio.getTitulo() == null || anuncio.getTitulo().isBlank()) {
-            throw new RequiredDataException("El título del anuncio no puede ser nulo o vacío.");
+    public AnuncioDTO add(AnuncioDTO dto) {
+        if (dto.getTitulo() == null || dto.getTitulo().isBlank()) {
+            throw new RequiredDataException("El título es obligatorio.");
         }
-        if (anuncio.getDescripcion() == null || anuncio.getDescripcion().isBlank()) {
-            throw new RequiredDataException("La descripción no puede ser nula o vacía.");
-        }
-        if (anuncio.getEvento() == null) {
+        if (dto.getEventoId() == null) {
             throw new RequiredDataException("El anuncio debe estar asociado a un evento.");
         }
 
-        return anuncioRepository.save(anuncio);
+        Anuncio anuncio = toEntity(dto);
+        // Si no se envió fecha de evento en el anuncio, podríamos tomarla del evento padre (opcional)
+        // Pero tu modelo tiene el campo, así que lo respetamos.
+        return toDTO(anuncioRepository.save(anuncio));
+    }
+
+    @Override
+    public AnuncioDTO update(Long id, AnuncioDTO dto) {
+        Anuncio anuncioFound = anuncioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Anuncio no encontrado con id: " + id));
+
+        anuncioFound.setTitulo(dto.getTitulo());
+        anuncioFound.setDescripcion(dto.getDescripcion());
+        anuncioFound.setGeneroBuscado(dto.getGeneroBuscado());
+        anuncioFound.setUbicacion(dto.getUbicacion());
+        anuncioFound.setPresupuesto(dto.getPresupuesto());
+        anuncioFound.setActivo(dto.isActivo());
+        if(dto.getFechaEvento() != null) anuncioFound.setFechaEvento(dto.getFechaEvento());
+
+        if (dto.getEventoId() != null) {
+            Evento evento = eventoRepository.findById(dto.getEventoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado id: " + dto.getEventoId()));
+            anuncioFound.setEvento(evento);
+        }
+
+        return toDTO(anuncioRepository.save(anuncioFound));
     }
 
     @Override
     public void delete(Long id) {
-        Anuncio anuncioFound = findById(id);
-
-        if (anuncioFound == null) {
-            throw new ResourceNotFoundException("No se encontró el anuncio con id: " + id);
+        if (!anuncioRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Anuncio no encontrado con id: " + id);
         }
-
         anuncioRepository.deleteById(id);
     }
 
     @Override
-    public Anuncio findById(Long id) {
-        return anuncioRepository.findById(id).orElse(null);
+    public AnuncioDTO findById(Long id) {
+        return toDTO(anuncioRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Anuncio> listAll() {
-        return anuncioRepository.findAll();
-    }
-
-    @Override
-    public Anuncio edit(Anuncio anuncio) {
-
-        Anuncio anuncioFound = findById(anuncio.getId());
-        if (anuncioFound == null) {
-            return null;
-        }
-
-        // Actualización de atributos
-        if (anuncio.getTitulo() != null && !anuncio.getTitulo().isBlank()) {
-            anuncioFound.setTitulo(anuncio.getTitulo());
-        }
-
-        if (anuncio.getDescripcion() != null && !anuncio.getDescripcion().isBlank()) {
-            anuncioFound.setDescripcion(anuncio.getDescripcion());
-        }
-
-        if (anuncio.getGeneroBuscado() != null && !anuncio.getGeneroBuscado().isBlank()) {
-            anuncioFound.setGeneroBuscado(anuncio.getGeneroBuscado());
-        }
-
-        if (anuncio.getFechaEvento() != null) {
-            anuncioFound.setFechaEvento(anuncio.getFechaEvento());
-        }
-
-        if (anuncio.getUbicacion() != null && !anuncio.getUbicacion().isBlank()) {
-            anuncioFound.setUbicacion(anuncio.getUbicacion());
-        }
-
-        if (anuncio.getPresupuesto() != null && !anuncio.getPresupuesto().isBlank()) {
-            anuncioFound.setPresupuesto(anuncio.getPresupuesto());
-        }
-
-        anuncioFound.setActivo(anuncio.isActivo());
-
-        if (anuncio.getFechaCreacion() != null) {
-            anuncioFound.setFechaCreacion(anuncio.getFechaCreacion());
-        }
-
-        if (anuncio.getEvento() != null) {
-            anuncioFound.setEvento(anuncio.getEvento());
-        }
-
-        return anuncioRepository.save(anuncioFound);
+    public List<AnuncioDTO> listAll() {
+        return toDTOList(anuncioRepository.findAll());
     }
 
     // ----------------------------------------------------
@@ -109,35 +138,27 @@ public class AnuncioServiceImpl implements AnuncioService {
     // ----------------------------------------------------
 
     @Override
-    public List<Anuncio> findByEventoId(Long eventoId) {
-        return anuncioRepository.findByEvento_Id(eventoId);
+    public List<AnuncioDTO> findByEventoId(Long eventoId) {
+        return toDTOList(anuncioRepository.findByEvento_Id(eventoId));
     }
 
     @Override
-    public List<Anuncio> findByActivo(boolean activo) {
-        return anuncioRepository.findByActivo(activo);
+    public List<AnuncioDTO> findByActivo(boolean activo) {
+        return toDTOList(anuncioRepository.findByActivo(activo));
     }
 
     @Override
-    public List<Anuncio> findByGeneroBuscado(String genero) {
-        return anuncioRepository.findByGeneroBuscado(genero);
+    public List<AnuncioDTO> findByGeneroBuscado(String genero) {
+        return toDTOList(anuncioRepository.findByGeneroBuscado(genero));
     }
 
-    // ----------------------------------------------------
-    // SQL Nativo
-    // ----------------------------------------------------
-
     @Override
-    public List<Anuncio> findByEventoSQL(Long eventoId) {
-        return anuncioRepository.findByEventoSQL(eventoId);
+    public List<AnuncioDTO> findByEventoSQL(Long eventoId) {
+        return toDTOList(anuncioRepository.findByEventoSQL(eventoId));
     }
 
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
     @Override
-    public List<Anuncio> findByEventoJPQL(Long eventoId) {
-        return anuncioRepository.findByEventoJPQL(eventoId);
+    public List<AnuncioDTO> findByEventoJPQL(Long eventoId) {
+        return toDTOList(anuncioRepository.findByEventoJPQL(eventoId));
     }
 }

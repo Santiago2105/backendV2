@@ -1,36 +1,27 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Anuncio;
-
+import pe.edu.upc.backend.dtos.AnuncioDTO;
 import java.util.List;
 
 public interface AnuncioService {
 
-    // CRUD
-    Anuncio add(Anuncio anuncio);
+    AnuncioDTO add(AnuncioDTO anuncioDTO);
+
+    AnuncioDTO update(Long id, AnuncioDTO anuncioDTO);
 
     void delete(Long id);
 
-    Anuncio findById(Long id);
+    AnuncioDTO findById(Long id);
 
-    List<Anuncio> listAll();
+    List<AnuncioDTO> listAll();
 
-    Anuncio edit(Anuncio anuncio);
+    List<AnuncioDTO> findByEventoId(Long eventoId);
 
+    List<AnuncioDTO> findByActivo(boolean activo);
 
+    List<AnuncioDTO> findByGeneroBuscado(String genero);
 
-    // Query Methods (del repositorio)
-    List<Anuncio> findByEventoId(Long eventoId);
+    List<AnuncioDTO> findByEventoSQL(Long eventoId);
 
-    List<Anuncio> findByActivo(boolean activo);
-
-    List<Anuncio> findByGeneroBuscado(String genero);
-
-
-    // SQL Nativo
-    List<Anuncio> findByEventoSQL(Long eventoId);
-
-
-    // JPQL
-    List<Anuncio> findByEventoJPQL(Long eventoId);
+    List<AnuncioDTO> findByEventoJPQL(Long eventoId);
 }
