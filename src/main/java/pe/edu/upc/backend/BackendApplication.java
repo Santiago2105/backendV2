@@ -53,6 +53,8 @@ public class BackendApplication {
             // user -> ROLE_USER
             userService.add(new DTOUser(null, "user", "user123", "ROLE_ARTISTA"));
 
+            userService.add(new DTOUser(null, "restaurante", "restaurante123", "ROLE_RESTAURANTE"));
+
 
 
 

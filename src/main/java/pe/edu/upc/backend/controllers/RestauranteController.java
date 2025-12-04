@@ -3,8 +3,9 @@ package pe.edu.upc.backend.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import pe.edu.upc.backend.entities.Restaurante;
+import pe.edu.upc.backend.dtos.RestauranteDTO;
 import pe.edu.upc.backend.services.RestauranteService;
 
 import java.util.List;
@@ -17,68 +18,71 @@ public class RestauranteController {
     @Autowired
     private RestauranteService restauranteService;
 
-    // ---------------------- CRUD ----------------------
+    // -------------------------------------------------------
+    // CRUD (PROTEGIDOS)
+    // -------------------------------------------------------
 
-    // Listar todos
     @GetMapping("/restaurantes")
-    public ResponseEntity<List<Restaurante>> listAll() {
+    @PreAuthorize("hasAnyAuthority('ROLE_RESTAURANTE', 'ROLE_ADMIN')")
+    public ResponseEntity<List<RestauranteDTO>> listAll() {
         return new ResponseEntity<>(restauranteService.listAll(), HttpStatus.OK);
     }
 
-    // Buscar por ID
     @GetMapping("/restaurantes/{id}")
-    public ResponseEntity<Restaurante> findById(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_RESTAURANTE', 'ROLE_ADMIN')")
+    public ResponseEntity<RestauranteDTO> findById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(restauranteService.findById(id), HttpStatus.OK);
     }
 
-    // Crear restaurante
     @PostMapping("/restaurantes")
-    public ResponseEntity<Restaurante> add(@RequestBody Restaurante restaurante) {
-        Restaurante created = restauranteService.add(restaurante);
+    @PreAuthorize("hasAnyAuthority('ROLE_RESTAURANTE', 'ROLE_ADMIN')")
+    public ResponseEntity<RestauranteDTO> add(@RequestBody RestauranteDTO dto) {
+        RestauranteDTO created = restauranteService.add(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
-    // Editar restaurante
-    @PutMapping("/restaurantes")
-    public ResponseEntity<Restaurante> edit(@RequestBody Restaurante restaurante) {
-        Restaurante updated = restauranteService.edit(restaurante);
+    @PutMapping("/restaurantes/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_RESTAURANTE', 'ROLE_ADMIN')")
+    public ResponseEntity<RestauranteDTO> update(@PathVariable("id") Long id,
+                                                 @RequestBody RestauranteDTO dto) {
+        RestauranteDTO updated = restauranteService.update(id, dto);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    // Eliminar restaurante
     @DeleteMapping("/restaurantes/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')") // Solo Admin suele borrar
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         restauranteService.delete(id);
-        return new ResponseEntity<>("Restaurante eliminado correctamente", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // ---------------------- QUERY METHODS ----------------------
+    // -------------------------------------------------------
+    // CONSULTAS (PÚBLICAS o SEMI-PÚBLICAS)
+    // -------------------------------------------------------
 
-    // Buscar por ciudad
-    @GetMapping("/restaurantes/ciudad/{ciudad}")
-    public ResponseEntity<List<Restaurante>> findByCiudad(@PathVariable("ciudad") String ciudad) {
+    @GetMapping("/public/restaurantes/ciudad/{ciudad}")
+    public ResponseEntity<List<RestauranteDTO>> findByCiudad(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(restauranteService.findByCiudad(ciudad), HttpStatus.OK);
     }
 
-    // Buscar por usuario
-    @GetMapping("/restaurantes/usuario/{id}")
-    public ResponseEntity<List<Restaurante>> findByUsuario(@PathVariable("id") Long id) {
-        return new ResponseEntity<>(restauranteService.findByUsuarioId(id), HttpStatus.OK);
+    @GetMapping("/public/restaurantes/usuario/{usuarioId}")
+    public ResponseEntity<List<RestauranteDTO>> findByUsuario(@PathVariable("usuarioId") Long usuarioId) {
+        return new ResponseEntity<>(restauranteService.findByUsuarioId(usuarioId), HttpStatus.OK);
     }
 
-    // ---------------------- SQL NATIVO ----------------------
+    // -------------------------------------------------------
+    // SQL NATIVO / JPQL (ADMIN)
+    // -------------------------------------------------------
 
-    // Buscar por ciudad (SQL)
-    @GetMapping("/restaurantes/sql/ciudad/{ciudad}")
-    public ResponseEntity<List<Restaurante>> findByCiudadSQL(@PathVariable("ciudad") String ciudad) {
+    @GetMapping("/admin/restaurantes/sql/ciudad/{ciudad}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<RestauranteDTO>> findByCiudadSQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(restauranteService.findByCiudadSQL(ciudad), HttpStatus.OK);
     }
 
-    // ---------------------- JPQL ----------------------
-
-    // Buscar por ciudad (JPQL)
-    @GetMapping("/restaurantes/jpql/ciudad/{ciudad}")
-    public ResponseEntity<List<Restaurante>> findByCiudadJPQL(@PathVariable("ciudad") String ciudad) {
+    @GetMapping("/admin/restaurantes/jpql/ciudad/{ciudad}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<RestauranteDTO>> findByCiudadJPQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(restauranteService.findByCiudadJPQL(ciudad), HttpStatus.OK);
     }
 }
