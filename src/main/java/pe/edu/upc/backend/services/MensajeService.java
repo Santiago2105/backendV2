@@ -1,33 +1,25 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Mensaje;
-
+import pe.edu.upc.backend.dtos.MensajeDTO;
 import java.util.List;
 
 public interface MensajeService {
 
-    // CRUD
-    Mensaje add(Mensaje mensaje);
+    MensajeDTO add(MensajeDTO mensajeDTO);
+
+    MensajeDTO update(Long id, MensajeDTO mensajeDTO);
 
     void delete(Long id);
 
-    Mensaje findById(Long id);
+    MensajeDTO findById(Long id);
 
-    List<Mensaje> listAll();
+    List<MensajeDTO> listAll();
 
-    Mensaje edit(Mensaje mensaje);
+    List<MensajeDTO> findByAnuncioId(Long anuncioId);
 
+    List<MensajeDTO> findByUsuarioId(Long usuarioId);
 
-    // Query Methods (del repositorio)
-    List<Mensaje> findByAnuncioId(Long anuncioId);
+    List<MensajeDTO> findByAnuncioSQL(Long anuncioId);
 
-    List<Mensaje> findByUsuarioId(Long usuarioId);
-
-
-    // SQL Nativo
-    List<Mensaje> findByAnuncioSQL(Long anuncioId);
-
-
-    // JPQL
-    List<Mensaje> findByAnuncioJPQL(Long anuncioId);
+    List<MensajeDTO> findByAnuncioJPQL(Long anuncioId);
 }
