@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.upc.backend.dtos.ArtistaDTO;
-import pe.edu.upc.backend.entities.Artista;
 import pe.edu.upc.backend.services.ArtistaService;
 
 import java.util.List;
@@ -19,89 +18,75 @@ public class ArtistaController {
     @Autowired
     private ArtistaService artistaService;
 
-    // ---------------------- CRUD ----------------------
+    // -------------------------------------------------------
+    // CRUD (PROTEGIDOS)
+    // -------------------------------------------------------
 
-    // Listar todos
     @GetMapping("/artistas")
     @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
     public ResponseEntity<List<ArtistaDTO>> listAll() {
         return new ResponseEntity<>(artistaService.listAll(), HttpStatus.OK);
     }
 
-    // Buscar por ID
     @GetMapping("/artistas/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
     public ResponseEntity<ArtistaDTO> findById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(artistaService.findById(id), HttpStatus.OK);
     }
 
-    // Crear artista
     @PostMapping("/artistas")
     @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<ArtistaDTO> add(@RequestBody ArtistaDTO artista) {
-        System.out.println("****************************************");
-        System.out.println("Artista: "+ artista.getId().toString());
-        System.out.println("Artista: "+ artista.getNombreArtistico());
-        System.out.println("Artista: "+ artista.getBio());
-        System.out.println("Artista: "+ artista.getCiudad());
-        System.out.println("Artista: "+ artista.getGeneroPrincipal());
-        ArtistaDTO created = artistaService.add(artista);
+    public ResponseEntity<ArtistaDTO> add(@RequestBody ArtistaDTO dto) {
+        ArtistaDTO created = artistaService.add(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
-    // Editar artista
-    @PutMapping("/artistas")
+    @PutMapping("/artistas/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<ArtistaDTO> edit(@RequestBody ArtistaDTO artista) {
-        ArtistaDTO updated = artistaService.edit(artista);
+    public ResponseEntity<ArtistaDTO> update(@PathVariable("id") Long id,
+                                             @RequestBody ArtistaDTO dto) {
+        ArtistaDTO updated = artistaService.update(id, dto);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    // Eliminar artista
     @DeleteMapping("/artistas/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         artistaService.delete(id);
-        return new ResponseEntity<>("Artista eliminado correctamente", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // ---------------------- QUERY METHODS ----------------------
+    // -------------------------------------------------------
+    // CONSULTAS (PÚBLICAS)
+    // -------------------------------------------------------
 
-    // Buscar por género musical
-    @GetMapping("/artistas/genero/{genero}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    @GetMapping("/public/artistas/genero/{genero}")
     public ResponseEntity<List<ArtistaDTO>> findByGenero(@PathVariable("genero") String genero) {
         return new ResponseEntity<>(artistaService.findByGeneroPrincipal(genero), HttpStatus.OK);
     }
 
-    // Buscar por ciudad (Query Method)
-    @GetMapping("/artistas/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    @GetMapping("/public/artistas/ciudad/{ciudad}")
     public ResponseEntity<List<ArtistaDTO>> findByCiudad(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudad(ciudad), HttpStatus.OK);
     }
 
-    // Buscar artistas por usuario
-    @GetMapping("/artistas/usuario/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<ArtistaDTO>> findByUsuario(@PathVariable("id") Long id) {
-        return new ResponseEntity<>(artistaService.findByUsuarioId(id), HttpStatus.OK);
+    @GetMapping("/public/artistas/usuario/{usuarioId}")
+    public ResponseEntity<List<ArtistaDTO>> findByUsuario(@PathVariable("usuarioId") Long usuarioId) {
+        return new ResponseEntity<>(artistaService.findByUsuarioId(usuarioId), HttpStatus.OK);
     }
 
-    // ---------------------- SQL NATIVO ----------------------
+    // -------------------------------------------------------
+    // SQL NATIVO / JPQL (solo ADMIN)
+    // -------------------------------------------------------
 
-    // Buscar por ciudad (SQL)
-    @GetMapping("/artistas/sql/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/artistas/sql/ciudad/{ciudad}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<ArtistaDTO>> findByCiudadSQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudadSQL(ciudad), HttpStatus.OK);
     }
 
-    // ---------------------- JPQL ----------------------
-
-    // Buscar por ciudad (JPQL)
-    @GetMapping("/artistas/jpql/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/artistas/jpql/ciudad/{ciudad}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<List<ArtistaDTO>> findByCiudadJPQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudadJPQL(ciudad), HttpStatus.OK);
     }

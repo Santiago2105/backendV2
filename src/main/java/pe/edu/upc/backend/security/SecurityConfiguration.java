@@ -84,9 +84,9 @@ public class SecurityConfiguration {
                         .requestMatchers(AUTH_WHITELIST).permitAll()
 
                         .requestMatchers(HttpMethod.GET,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
+                        .requestMatchers(HttpMethod.POST,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
+                        .requestMatchers(HttpMethod.DELETE,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
                         .requestMatchers(HttpMethod.GET,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
                         .requestMatchers(HttpMethod.PUT,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN")
