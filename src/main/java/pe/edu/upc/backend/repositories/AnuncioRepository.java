@@ -2,6 +2,7 @@ package pe.edu.upc.backend.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import pe.edu.upc.backend.entities.Anuncio;
 
 import java.util.List;
@@ -16,13 +17,10 @@ public interface AnuncioRepository extends JpaRepository<Anuncio, Long> {
     List<Anuncio> findByGeneroBuscado(String genero);
 
 
-    // SQL Nativo
-    @Query(value = "SELECT * FROM anuncios WHERE id_eventos = ?1", nativeQuery = true)
-    List<Anuncio> findByEventoSQL(Long eventoId);
+    @Query(value = "SELECT * FROM anuncios WHERE id_eventos = :id", nativeQuery = true)
+    List<Anuncio> findByEventoSQL(@Param("id") Long eventoId);
 
-
-    // JPQL
-    @Query("SELECT a FROM Anuncio a WHERE a.evento.id = ?1")
-    List<Anuncio> findByEventoJPQL(Long eventoId);
+    @Query("SELECT a FROM Anuncio a WHERE a.evento.id = :id")
+    List<Anuncio> findByEventoJPQL(@Param("id") Long eventoId);
 }
 

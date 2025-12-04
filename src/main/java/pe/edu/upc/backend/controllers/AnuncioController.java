@@ -3,8 +3,9 @@ package pe.edu.upc.backend.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import pe.edu.upc.backend.entities.Anuncio;
+import pe.edu.upc.backend.dtos.AnuncioDTO;
 import pe.edu.upc.backend.services.AnuncioService;
 
 import java.util.List;
@@ -17,74 +18,52 @@ public class AnuncioController {
     @Autowired
     private AnuncioService anuncioService;
 
-    // ---------------------- CRUD ----------------------
-
-    // Listar todos
     @GetMapping("/anuncios")
-    public ResponseEntity<List<Anuncio>> listAll() {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
+    public ResponseEntity<List<AnuncioDTO>> listAll() {
         return new ResponseEntity<>(anuncioService.listAll(), HttpStatus.OK);
     }
 
-    // Buscar por ID
     @GetMapping("/anuncios/{id}")
-    public ResponseEntity<Anuncio> findById(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
+    public ResponseEntity<AnuncioDTO> findById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(anuncioService.findById(id), HttpStatus.OK);
     }
 
-    // Crear anuncio
     @PostMapping("/anuncios")
-    public ResponseEntity<Anuncio> add(@RequestBody Anuncio anuncio) {
-        Anuncio created = anuncioService.add(anuncio);
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')") // Restaurante crea anuncio
+    public ResponseEntity<AnuncioDTO> add(@RequestBody AnuncioDTO anuncioDTO) {
+        AnuncioDTO created = anuncioService.add(anuncioDTO);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
-    // Editar anuncio
-    @PutMapping("/anuncios")
-    public ResponseEntity<Anuncio> edit(@RequestBody Anuncio anuncio) {
-        Anuncio updated = anuncioService.edit(anuncio);
+    @PutMapping("/anuncios/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
+    public ResponseEntity<AnuncioDTO> update(@PathVariable("id") Long id, @RequestBody AnuncioDTO anuncioDTO) {
+        AnuncioDTO updated = anuncioService.update(id, anuncioDTO);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    // Eliminar anuncio
     @DeleteMapping("/anuncios/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAuthority('ROLE_ADMIN',ROLE_RESTAURANTE)")
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         anuncioService.delete(id);
-        return new ResponseEntity<>("Anuncio eliminado correctamente", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // ---------------------- QUERY METHODS ----------------------
-
-    // Buscar anuncios por evento
+    // Consultas
     @GetMapping("/anuncios/evento/{id}")
-    public ResponseEntity<List<Anuncio>> findByEvento(@PathVariable("id") Long eventoId) {
+    public ResponseEntity<List<AnuncioDTO>> findByEvento(@PathVariable("id") Long eventoId) {
         return new ResponseEntity<>(anuncioService.findByEventoId(eventoId), HttpStatus.OK);
     }
 
-    // Buscar anuncios por estado (activo / inactivo)
     @GetMapping("/anuncios/activo/{activo}")
-    public ResponseEntity<List<Anuncio>> findByActivo(@PathVariable("activo") boolean activo) {
+    public ResponseEntity<List<AnuncioDTO>> findByActivo(@PathVariable("activo") boolean activo) {
         return new ResponseEntity<>(anuncioService.findByActivo(activo), HttpStatus.OK);
     }
 
-    // Buscar anuncios por género buscado
     @GetMapping("/anuncios/genero/{genero}")
-    public ResponseEntity<List<Anuncio>> findByGenero(@PathVariable("genero") String genero) {
+    public ResponseEntity<List<AnuncioDTO>> findByGenero(@PathVariable("genero") String genero) {
         return new ResponseEntity<>(anuncioService.findByGeneroBuscado(genero), HttpStatus.OK);
-    }
-
-    // ---------------------- SQL NATIVO ----------------------
-
-    // Buscar anuncios por evento (SQL)
-    @GetMapping("/anuncios/sql/evento/{id}")
-    public ResponseEntity<List<Anuncio>> findByEventoSQL(@PathVariable("id") Long eventoId) {
-        return new ResponseEntity<>(anuncioService.findByEventoSQL(eventoId), HttpStatus.OK);
-    }
-
-    // ---------------------- JPQL ----------------------
-
-    // Buscar anuncios por evento (JPQL)
-    @GetMapping("/anuncios/jpql/evento/{id}")
-    public ResponseEntity<List<Anuncio>> findByEventoJPQL(@PathVariable("id") Long eventoId) {
-        return new ResponseEntity<>(anuncioService.findByEventoJPQL(eventoId), HttpStatus.OK);
     }
 }
