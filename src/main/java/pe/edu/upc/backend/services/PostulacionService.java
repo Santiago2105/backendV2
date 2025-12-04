@@ -1,35 +1,27 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Postulacion;
-
+import pe.edu.upc.backend.dtos.PostulacionDTO;
 import java.util.List;
 
 public interface PostulacionService {
 
-    // CRUD
-    Postulacion add(Postulacion postulacion);
+    PostulacionDTO add(PostulacionDTO postulacionDTO);
+
+    PostulacionDTO update(Long id, PostulacionDTO postulacionDTO);
 
     void delete(Long id);
 
-    Postulacion findById(Long id);
+    PostulacionDTO findById(Long id);
 
-    List<Postulacion> listAll();
+    List<PostulacionDTO> listAll();
 
-    Postulacion edit(Postulacion postulacion);
+    List<PostulacionDTO> findByAnuncioId(Long anuncioId);
 
+    List<PostulacionDTO> findByArtistaId(Long artistaId);
 
-    // Query Methods (del repositorio)
-    List<Postulacion> findByAnuncioId(Long anuncioId);
+    List<PostulacionDTO> findByAceptada(boolean aceptada);
 
-    List<Postulacion> findByArtistaId(Long artistaId);
+    List<PostulacionDTO> findByAnuncioSQL(Long anuncioId);
 
-    List<Postulacion> findByAceptada(boolean aceptada);
-
-
-    // SQL Nativo
-    List<Postulacion> findByAnuncioSQL(Long anuncioId);
-
-
-    // JPQL
-    List<Postulacion> findByAnuncioJPQL(Long anuncioId);
+    List<PostulacionDTO> findByAnuncioJPQL(Long anuncioId);
 }

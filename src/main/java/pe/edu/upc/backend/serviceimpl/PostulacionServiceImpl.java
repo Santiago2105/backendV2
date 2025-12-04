@@ -2,126 +2,137 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.PostulacionDTO;
+import pe.edu.upc.backend.entities.Anuncio;
+import pe.edu.upc.backend.entities.Artista;
 import pe.edu.upc.backend.entities.Postulacion;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
+import pe.edu.upc.backend.repositories.AnuncioRepository;
+import pe.edu.upc.backend.repositories.ArtistaRepository;
 import pe.edu.upc.backend.repositories.PostulacionRepository;
 import pe.edu.upc.backend.services.PostulacionService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PostulacionServiceImpl implements PostulacionService {
 
     @Autowired
     private PostulacionRepository postulacionRepository;
+    @Autowired
+    private AnuncioRepository anuncioRepository;
+    @Autowired
+    private ArtistaRepository artistaRepository;
 
-    // ----------------------------------------------------
-    // CRUD
-    // ----------------------------------------------------
+    // --- Mappers ---
+    private PostulacionDTO toDTO(Postulacion postulacion) {
+        if (postulacion == null) return null;
+        PostulacionDTO dto = new PostulacionDTO();
+        dto.setId(postulacion.getId());
+        dto.setMensaje(postulacion.getMensaje());
+        dto.setAceptada(postulacion.isAceptada());
+        dto.setFechaPostulacion(postulacion.getFechaPostulacion());
+
+        if (postulacion.getAnuncio() != null) dto.setAnuncioId(postulacion.getAnuncio().getId());
+        if (postulacion.getArtista() != null) dto.setArtistaId(postulacion.getArtista().getId());
+        return dto;
+    }
+
+    private Postulacion toEntity(PostulacionDTO dto) {
+        Postulacion postulacion = new Postulacion();
+        postulacion.setMensaje(dto.getMensaje());
+        postulacion.setAceptada(dto.isAceptada());
+
+        if (dto.getFechaPostulacion() != null) postulacion.setFechaPostulacion(dto.getFechaPostulacion());
+        else postulacion.setFechaPostulacion(LocalDate.now());
+
+        if (dto.getAnuncioId() != null) {
+            Anuncio anuncio = anuncioRepository.findById(dto.getAnuncioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Anuncio no encontrado"));
+            postulacion.setAnuncio(anuncio);
+        }
+        if (dto.getArtistaId() != null) {
+            Artista artista = artistaRepository.findById(dto.getArtistaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Artista no encontrado"));
+            postulacion.setArtista(artista);
+        }
+        return postulacion;
+    }
+
+    private List<PostulacionDTO> toDTOList(List<Postulacion> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // --- CRUD ---
+    @Override
+    public PostulacionDTO add(PostulacionDTO dto) {
+        if (dto.getMensaje() == null || dto.getMensaje().isBlank()) {
+            throw new RequiredDataException("Mensaje requerido.");
+        }
+        if (dto.getAnuncioId() == null || dto.getArtistaId() == null) {
+            throw new RequiredDataException("Faltan datos de relación (anuncio/artista).");
+        }
+
+        Postulacion entity = toEntity(dto);
+        // Default: no aceptada al inicio
+        entity.setAceptada(false);
+        return toDTO(postulacionRepository.save(entity));
+    }
 
     @Override
-    public Postulacion add(Postulacion postulacion) {
+    public PostulacionDTO update(Long id, PostulacionDTO dto) {
+        Postulacion entity = postulacionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Postulación no encontrada"));
 
-        // Validación de campos requeridos
-        if (postulacion.getMensaje() == null || postulacion.getMensaje().isBlank()) {
-            throw new RequiredDataException("El mensaje de la postulación no puede ser nulo o vacío.");
-        }
-        if (postulacion.getAnuncio() == null) {
-            throw new RequiredDataException("La postulación debe estar asociada a un anuncio.");
-        }
-        if (postulacion.getArtista() == null) {
-            throw new RequiredDataException("La postulación debe estar asociada a un artista.");
-        }
+        if (dto.getMensaje() != null) entity.setMensaje(dto.getMensaje());
+        // Aquí es donde un restaurante aceptaría la postulación
+        entity.setAceptada(dto.isAceptada());
 
-        return postulacionRepository.save(postulacion);
+        return toDTO(postulacionRepository.save(entity));
     }
 
     @Override
     public void delete(Long id) {
-        Postulacion postulacionFound = findById(id);
-
-        if (postulacionFound == null) {
-            throw new ResourceNotFoundException("No se encontró la postulación con id: " + id);
-        }
-
+        if(!postulacionRepository.existsById(id)) throw new ResourceNotFoundException("No encontrado");
         postulacionRepository.deleteById(id);
     }
 
     @Override
-    public Postulacion findById(Long id) {
-        return postulacionRepository.findById(id).orElse(null);
+    public PostulacionDTO findById(Long id) {
+        return toDTO(postulacionRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Postulacion> listAll() {
-        return postulacionRepository.findAll();
+    public List<PostulacionDTO> listAll() {
+        return toDTOList(postulacionRepository.findAll());
+    }
+
+    // --- Queries ---
+    @Override
+    public List<PostulacionDTO> findByAnuncioId(Long anuncioId) {
+        return toDTOList(postulacionRepository.findByAnuncio_Id(anuncioId));
     }
 
     @Override
-    public Postulacion edit(Postulacion postulacion) {
-
-        Postulacion postulacionFound = findById(postulacion.getId());
-        if (postulacionFound == null) {
-            return null;
-        }
-
-        // Actualización de atributos
-        if (postulacion.getMensaje() != null && !postulacion.getMensaje().isBlank()) {
-            postulacionFound.setMensaje(postulacion.getMensaje());
-        }
-
-        postulacionFound.setAceptada(postulacion.isAceptada());
-
-        if (postulacion.getFechaPostulacion() != null) {
-            postulacionFound.setFechaPostulacion(postulacion.getFechaPostulacion());
-        }
-
-        if (postulacion.getAnuncio() != null) {
-            postulacionFound.setAnuncio(postulacion.getAnuncio());
-        }
-
-        if (postulacion.getArtista() != null) {
-            postulacionFound.setArtista(postulacion.getArtista());
-        }
-
-        return postulacionRepository.save(postulacionFound);
-    }
-
-    // ----------------------------------------------------
-    // Query Methods
-    // ----------------------------------------------------
-
-    @Override
-    public List<Postulacion> findByAnuncioId(Long anuncioId) {
-        return postulacionRepository.findByAnuncio_Id(anuncioId);
+    public List<PostulacionDTO> findByArtistaId(Long artistaId) {
+        return toDTOList(postulacionRepository.findByArtista_Id(artistaId));
     }
 
     @Override
-    public List<Postulacion> findByArtistaId(Long artistaId) {
-        return postulacionRepository.findByArtista_Id(artistaId);
+    public List<PostulacionDTO> findByAceptada(boolean aceptada) {
+        return toDTOList(postulacionRepository.findByAceptada(aceptada));
     }
 
     @Override
-    public List<Postulacion> findByAceptada(boolean aceptada) {
-        return postulacionRepository.findByAceptada(aceptada);
+    public List<PostulacionDTO> findByAnuncioSQL(Long anuncioId) {
+        return toDTOList(postulacionRepository.findByAnuncioSQL(anuncioId));
     }
 
-    // ----------------------------------------------------
-    // SQL Nativo
-    // ----------------------------------------------------
-
     @Override
-    public List<Postulacion> findByAnuncioSQL(Long anuncioId) {
-        return postulacionRepository.findByAnuncioSQL(anuncioId);
-    }
-
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
-    @Override
-    public List<Postulacion> findByAnuncioJPQL(Long anuncioId) {
-        return postulacionRepository.findByAnuncioJPQL(anuncioId);
+    public List<PostulacionDTO> findByAnuncioJPQL(Long anuncioId) {
+        return toDTOList(postulacionRepository.findByAnuncioJPQL(anuncioId));
     }
 }
