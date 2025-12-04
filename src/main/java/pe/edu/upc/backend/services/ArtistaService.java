@@ -12,25 +12,25 @@ public interface ArtistaService {
 
     void delete(Long id);
 
-    Artista findById(Long id);
+    ArtistaDTO findById(Long id);
 
-    List<Artista> listAll();
+    List<ArtistaDTO> listAll();
 
-    Artista edit(Artista artista);
+    ArtistaDTO edit(ArtistaDTO artista);
 
 
     // Query Methods (del repositorio)
-    List<Artista> findByGeneroPrincipal(String genero);
+    List<ArtistaDTO> findByGeneroPrincipal(String genero);
 
-    List<Artista> findByCiudad(String ciudad);
+    List<ArtistaDTO> findByCiudad(String ciudad);
 
-    List<Artista> findByUsuarioId(Long usuarioId);
+    List<ArtistaDTO> findByUsuarioId(Long usuarioId);
 
 
     // SQL Nativo
-    List<Artista> findByCiudadSQL(String ciudad);
+    List<ArtistaDTO> findByCiudadSQL(String ciudad);
 
 
     // JPQL
-    List<Artista> findByCiudadJPQL(String ciudad);
+    List<ArtistaDTO> findByCiudadJPQL(String ciudad);
 }

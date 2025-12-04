@@ -23,21 +23,21 @@ public class ArtistaController {
 
     // Listar todos
     @GetMapping("/artistas")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> listAll() {
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> listAll() {
         return new ResponseEntity<>(artistaService.listAll(), HttpStatus.OK);
     }
 
     // Buscar por ID
     @GetMapping("/artistas/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<Artista> findById(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ArtistaDTO> findById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(artistaService.findById(id), HttpStatus.OK);
     }
 
     // Crear artista
     @PostMapping("/artistas")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
     public ResponseEntity<ArtistaDTO> add(@RequestBody ArtistaDTO artista) {
         System.out.println("****************************************");
         System.out.println("Artista: "+ artista.getId().toString());
@@ -51,15 +51,15 @@ public class ArtistaController {
 
     // Editar artista
     @PutMapping("/artistas")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<Artista> edit(@RequestBody Artista artista) {
-        Artista updated = artistaService.edit(artista);
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    public ResponseEntity<ArtistaDTO> edit(@RequestBody ArtistaDTO artista) {
+        ArtistaDTO updated = artistaService.edit(artista);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
     // Eliminar artista
     @DeleteMapping("/artistas/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
     public ResponseEntity<String> delete(@PathVariable("id") Long id) {
         artistaService.delete(id);
         return new ResponseEntity<>("Artista eliminado correctamente", HttpStatus.OK);
@@ -69,22 +69,22 @@ public class ArtistaController {
 
     // Buscar por género musical
     @GetMapping("/artistas/genero/{genero}")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> findByGenero(@PathVariable("genero") String genero) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> findByGenero(@PathVariable("genero") String genero) {
         return new ResponseEntity<>(artistaService.findByGeneroPrincipal(genero), HttpStatus.OK);
     }
 
     // Buscar por ciudad (Query Method)
     @GetMapping("/artistas/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyRole('ROLE_ARTISTA', 'ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> findByCiudad(@PathVariable("ciudad") String ciudad) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA', 'ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> findByCiudad(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudad(ciudad), HttpStatus.OK);
     }
 
     // Buscar artistas por usuario
     @GetMapping("/artistas/usuario/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> findByUsuario(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> findByUsuario(@PathVariable("id") Long id) {
         return new ResponseEntity<>(artistaService.findByUsuarioId(id), HttpStatus.OK);
     }
 
@@ -92,8 +92,8 @@ public class ArtistaController {
 
     // Buscar por ciudad (SQL)
     @GetMapping("/artistas/sql/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> findByCiudadSQL(@PathVariable("ciudad") String ciudad) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> findByCiudadSQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudadSQL(ciudad), HttpStatus.OK);
     }
 
@@ -101,8 +101,8 @@ public class ArtistaController {
 
     // Buscar por ciudad (JPQL)
     @GetMapping("/artistas/jpql/ciudad/{ciudad}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public ResponseEntity<List<Artista>> findByCiudadJPQL(@PathVariable("ciudad") String ciudad) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ArtistaDTO>> findByCiudadJPQL(@PathVariable("ciudad") String ciudad) {
         return new ResponseEntity<>(artistaService.findByCiudadJPQL(ciudad), HttpStatus.OK);
     }
 }
