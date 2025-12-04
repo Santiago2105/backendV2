@@ -2,6 +2,7 @@ package pe.edu.upc.backend.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import pe.edu.upc.backend.entities.Evento;
 
 import java.time.LocalDate;
@@ -17,12 +18,9 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     List<Evento> findByFechaEvento(LocalDate fechaEvento);
 
 
-    // SQL Nativo
-    @Query(value = "SELECT * FROM eventos WHERE id_restaurantes = ?1", nativeQuery = true)
-    List<Evento> findByRestauranteSQL(Long restauranteId);
+    @Query(value = "SELECT * FROM eventos WHERE id_restaurantes = :id", nativeQuery = true)
+    List<Evento> findByRestauranteSQL(@Param("id") Long restauranteId);
 
-
-    // JPQL
-    @Query("SELECT e FROM Evento e WHERE e.restaurante.id = ?1")
-    List<Evento> findByRestauranteJPQL(Long restauranteId);
+    @Query("SELECT e FROM Evento e WHERE e.restaurante.id = :id")
+    List<Evento> findByRestauranteJPQL(@Param("id") Long restauranteId);
 }

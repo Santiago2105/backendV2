@@ -1,36 +1,32 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Evento;
-
+import pe.edu.upc.backend.dtos.EventoDTO;
 import java.time.LocalDate;
 import java.util.List;
 
 public interface EventoService {
 
     // CRUD
-    Evento add(Evento evento);
+    EventoDTO add(EventoDTO eventoDTO);
+
+    EventoDTO update(Long id, EventoDTO eventoDTO);
 
     void delete(Long id);
 
-    Evento findById(Long id);
+    EventoDTO findById(Long id);
 
-    List<Evento> listAll();
+    List<EventoDTO> listAll();
 
-    Evento edit(Evento evento);
+    // Query Methods
+    List<EventoDTO> findByRestauranteId(Long restauranteId);
 
+    List<EventoDTO> findByArtistaId(Long artistaId);
 
-    // Query Methods (del repositorio)
-    List<Evento> findByRestauranteId(Long restauranteId);
-
-    List<Evento> findByArtistaId(Long artistaId);
-
-    List<Evento> findByFechaEvento(LocalDate fechaEvento);
-
+    List<EventoDTO> findByFechaEvento(LocalDate fechaEvento);
 
     // SQL Nativo
-    List<Evento> findByRestauranteSQL(Long restauranteId);
-
+    List<EventoDTO> findByRestauranteSQL(Long restauranteId);
 
     // JPQL
-    List<Evento> findByRestauranteJPQL(Long restauranteId);
+    List<EventoDTO> findByRestauranteJPQL(Long restauranteId);
 }
