@@ -94,7 +94,12 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
                         .requestMatchers(HttpMethod.DELETE,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
                         .requestMatchers(HttpMethod.GET,"/upc/public/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-
+                        //PARA EVENTOS
+                        .requestMatchers(HttpMethod.GET,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
+                        .requestMatchers(HttpMethod.PUT,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
+                        .requestMatchers(HttpMethod.POST,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
+                        .requestMatchers(HttpMethod.DELETE,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
+                        .requestMatchers(HttpMethod.GET,"/upc/public/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
                         //PARA ANUNCIOS
                         .requestMatchers(HttpMethod.GET,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
                         .requestMatchers(HttpMethod.PUT,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN")

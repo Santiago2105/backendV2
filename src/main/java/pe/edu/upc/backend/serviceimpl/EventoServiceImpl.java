@@ -2,96 +2,145 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.EventoDTO;
+import pe.edu.upc.backend.entities.Artista;
 import pe.edu.upc.backend.entities.Evento;
+import pe.edu.upc.backend.entities.Restaurante;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
+import pe.edu.upc.backend.repositories.ArtistaRepository;
 import pe.edu.upc.backend.repositories.EventoRepository;
+import pe.edu.upc.backend.repositories.RestauranteRepository;
 import pe.edu.upc.backend.services.EventoService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EventoServiceImpl implements EventoService {
 
     @Autowired
     private EventoRepository eventoRepository;
+    @Autowired
+    private ArtistaRepository artistaRepository;
+    @Autowired
+    private RestauranteRepository restauranteRepository;
+
+    // ----------------------------------------------------
+    // Mappers
+    // ----------------------------------------------------
+
+    private EventoDTO toDTO(Evento evento) {
+        if (evento == null) return null;
+        EventoDTO dto = new EventoDTO();
+        dto.setId(evento.getId());
+        dto.setFechaEvento(evento.getFechaEvento());
+        dto.setCachet(evento.getCachet());
+        dto.setRealizado(evento.isRealizado());
+        dto.setFechaCreacion(evento.getFechaCreacion());
+
+        if (evento.getArtista() != null) {
+            dto.setArtistaId(evento.getArtista().getId());
+        }
+        if (evento.getRestaurante() != null) {
+            dto.setRestauranteId(evento.getRestaurante().getId());
+        }
+        return dto;
+    }
+
+    private Evento toEntity(EventoDTO dto) {
+        Evento evento = new Evento();
+        // ID se genera auto o se setea en update
+        evento.setFechaEvento(dto.getFechaEvento());
+        evento.setCachet(dto.getCachet());
+        evento.setRealizado(dto.isRealizado());
+
+        // Fecha creación: si es nuevo, hoy; si no, mantener (se maneja en update usualmente)
+        if (dto.getFechaCreacion() != null) {
+            evento.setFechaCreacion(dto.getFechaCreacion());
+        } else {
+            evento.setFechaCreacion(LocalDate.now());
+        }
+
+        // Relaciones
+        if (dto.getArtistaId() != null) {
+            Artista artista = artistaRepository.findById(dto.getArtistaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Artista no encontrado id: " + dto.getArtistaId()));
+            evento.setArtista(artista);
+        }
+        if (dto.getRestauranteId() != null) {
+            Restaurante restaurante = restauranteRepository.findById(dto.getRestauranteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Restaurante no encontrado id: " + dto.getRestauranteId()));
+            evento.setRestaurante(restaurante);
+        }
+        return evento;
+    }
+
+    private List<EventoDTO> toDTOList(List<Evento> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
 
     // ----------------------------------------------------
     // CRUD
     // ----------------------------------------------------
 
     @Override
-    public Evento add(Evento evento) {
-
-        // Validación de campos obligatorios
-        if (evento.getFechaEvento() == null) {
-            throw new RequiredDataException("La fecha del evento no puede ser nula.");
+    public EventoDTO add(EventoDTO dto) {
+        if (dto.getFechaEvento() == null) {
+            throw new RequiredDataException("La fecha del evento es obligatoria.");
         }
-        if (evento.getRestaurante() == null) {
-            throw new RequiredDataException("El evento debe estar asociado a un restaurante.");
-        }
-        if (evento.getArtista() == null) {
-            throw new RequiredDataException("El evento debe estar asociado a un artista.");
+        if (dto.getArtistaId() == null || dto.getRestauranteId() == null) {
+            throw new RequiredDataException("El evento debe tener un artista y un restaurante asignados.");
         }
 
-        // Registro del evento
-        return eventoRepository.save(evento);
+        Evento evento = toEntity(dto);
+        // Forzamos la fecha de creación al momento actual
+        evento.setFechaCreacion(LocalDate.now());
+        return toDTO(eventoRepository.save(evento));
+    }
+
+    @Override
+    public EventoDTO update(Long id, EventoDTO dto) {
+        Evento eventoFound = eventoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado con id: " + id));
+
+        // Actualizar campos simples
+        eventoFound.setFechaEvento(dto.getFechaEvento());
+        eventoFound.setCachet(dto.getCachet());
+        eventoFound.setRealizado(dto.isRealizado());
+
+        // Actualizar relaciones si vienen en el DTO
+        if (dto.getArtistaId() != null) {
+            Artista artista = artistaRepository.findById(dto.getArtistaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Artista no encontrado id: " + dto.getArtistaId()));
+            eventoFound.setArtista(artista);
+        }
+        if (dto.getRestauranteId() != null) {
+            Restaurante restaurante = restauranteRepository.findById(dto.getRestauranteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Restaurante no encontrado id: " + dto.getRestauranteId()));
+            eventoFound.setRestaurante(restaurante);
+        }
+
+        return toDTO(eventoRepository.save(eventoFound));
     }
 
     @Override
     public void delete(Long id) {
-        Evento eventoFound = findById(id);
-
-        if (eventoFound == null) {
-            throw new ResourceNotFoundException("No se encontró el evento con id: " + id);
+        if (!eventoRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Evento no encontrado con id: " + id);
         }
-
         eventoRepository.deleteById(id);
     }
 
     @Override
-    public Evento findById(Long id) {
-        return eventoRepository.findById(id).orElse(null);
+    public EventoDTO findById(Long id) {
+        return toDTO(eventoRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Evento> listAll() {
-        return eventoRepository.findAll();
-    }
-
-    @Override
-    public Evento edit(Evento evento) {
-
-        Evento eventoFound = findById(evento.getId());
-        if (eventoFound == null) {
-            return null;
-        }
-
-        // Actualización de valores enviados
-        if (evento.getFechaEvento() != null) {
-            eventoFound.setFechaEvento(evento.getFechaEvento());
-        }
-
-        if (evento.getCachet() != null && !evento.getCachet().isBlank()) {
-            eventoFound.setCachet(evento.getCachet());
-        }
-
-        eventoFound.setRealizado(evento.isRealizado());
-
-        if (evento.getFechaCreacion() != null) {
-            eventoFound.setFechaCreacion(evento.getFechaCreacion());
-        }
-
-        if (evento.getRestaurante() != null) {
-            eventoFound.setRestaurante(evento.getRestaurante());
-        }
-
-        if (evento.getArtista() != null) {
-            eventoFound.setArtista(evento.getArtista());
-        }
-
-        return eventoRepository.save(eventoFound);
+    public List<EventoDTO> listAll() {
+        return toDTOList(eventoRepository.findAll());
     }
 
     // ----------------------------------------------------
@@ -99,35 +148,27 @@ public class EventoServiceImpl implements EventoService {
     // ----------------------------------------------------
 
     @Override
-    public List<Evento> findByRestauranteId(Long restauranteId) {
-        return eventoRepository.findByRestaurante_Id(restauranteId);
+    public List<EventoDTO> findByRestauranteId(Long restauranteId) {
+        return toDTOList(eventoRepository.findByRestaurante_Id(restauranteId));
     }
 
     @Override
-    public List<Evento> findByArtistaId(Long artistaId) {
-        return eventoRepository.findByArtista_Id(artistaId);
+    public List<EventoDTO> findByArtistaId(Long artistaId) {
+        return toDTOList(eventoRepository.findByArtista_Id(artistaId));
     }
 
     @Override
-    public List<Evento> findByFechaEvento(LocalDate fechaEvento) {
-        return eventoRepository.findByFechaEvento(fechaEvento);
+    public List<EventoDTO> findByFechaEvento(LocalDate fechaEvento) {
+        return toDTOList(eventoRepository.findByFechaEvento(fechaEvento));
     }
 
-    // ----------------------------------------------------
-    // SQL Nativo
-    // ----------------------------------------------------
-
     @Override
-    public List<Evento> findByRestauranteSQL(Long restauranteId) {
-        return eventoRepository.findByRestauranteSQL(restauranteId);
+    public List<EventoDTO> findByRestauranteSQL(Long restauranteId) {
+        return toDTOList(eventoRepository.findByRestauranteSQL(restauranteId));
     }
 
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
     @Override
-    public List<Evento> findByRestauranteJPQL(Long restauranteId) {
-        return eventoRepository.findByRestauranteJPQL(restauranteId);
+    public List<EventoDTO> findByRestauranteJPQL(Long restauranteId) {
+        return toDTOList(eventoRepository.findByRestauranteJPQL(restauranteId));
     }
 }
