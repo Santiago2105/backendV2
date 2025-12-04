@@ -110,6 +110,11 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
                         .requestMatchers(HttpMethod.POST,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
                         .requestMatchers(HttpMethod.DELETE,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
+                        //PARA POSTULACIONES
+                        .requestMatchers(HttpMethod.GET,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
+                        .requestMatchers(HttpMethod.PUT,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
+                        .requestMatchers(HttpMethod.POST,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
+                        .requestMatchers(HttpMethod.DELETE,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
                         .anyRequest().authenticated()
 
         );
