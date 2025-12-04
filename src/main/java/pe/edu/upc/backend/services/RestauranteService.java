@@ -1,35 +1,31 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Restaurante;
-
+import pe.edu.upc.backend.dtos.RestauranteDTO;
 import java.util.List;
 
 public interface RestauranteService {
 
     // CRUD
-    Restaurante add(Restaurante restaurante);
+    RestauranteDTO add(RestauranteDTO restauranteDTO);
+
+    RestauranteDTO update(Long id, RestauranteDTO restauranteDTO); // Cambiamos 'edit' por 'update' para ser consistentes
 
     void delete(Long id);
 
-    Restaurante findById(Long id);
+    RestauranteDTO findById(Long id);
 
-    List<Restaurante> listAll();
+    List<RestauranteDTO> listAll();
 
-    Restaurante edit(Restaurante restaurante);
+    // Query Methods
+    List<RestauranteDTO> findByCiudad(String ciudad);
 
+    List<RestauranteDTO> findByAforoMesasGreaterThan(Integer aforo);
 
-    // Query Methods (del repositorio)
-    List<Restaurante> findByCiudad(String ciudad);
-
-    List<Restaurante> findByAforoMesasGreaterThan(Integer aforo);
-
-    List<Restaurante> findByUsuarioId(Long usuarioId);
-
+    List<RestauranteDTO> findByUsuarioId(Long usuarioId);
 
     // SQL Nativo
-    List<Restaurante> findByCiudadSQL(String ciudad);
-
+    List<RestauranteDTO> findByCiudadSQL(String ciudad);
 
     // JPQL
-    List<Restaurante> findByCiudadJPQL(String ciudad);
+    List<RestauranteDTO> findByCiudadJPQL(String ciudad);
 }
