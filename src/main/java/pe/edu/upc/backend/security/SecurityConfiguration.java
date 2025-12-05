@@ -18,22 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfiguration {
 
-    private static final String[] AUTH_WHITELIST ={
-
-            // -- Swagger
-            "swagger-ui.html",
-            "swagger-ui/**",
-            "swagger-resources/**",
-
-
-            // -- Login
-            "upc/users/login/**",
-
-            // -- Registro de nuevo usuarios
-            "upc/users/signup/**",
-
-    };
-
+    @Autowired
+    JwtRequestFilter jwtRequestFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -45,105 +31,64 @@ public class SecurityConfiguration {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    /*
-
-    1. Cuales van a ser los Request(pedidos) que seran evaluados para saber si el usuario tiene permisos sobre estos request
-        a. AnyRequest -> Todos los pedidos
-        b. RequestMatcher -> Se evalua solo los que coincidan con las rutas especificadas
-        c. RequestMatcher + HttpMethod -> Se evalua solo los que coincidan con las rutas especificadas y con el metodo Http (GET, POST, etc.)
-
-    2. Cual es la regla de autorizacion que se va a aplicar sobre estos Request(pedidos)
-        a. permitAll()
-        b. denyAll()
-        c. hasAnyAuthority()
-        d. hasAuthority()
-        e. hasRole()
-        f. hasAnyRole()
-        g. SpEL -> Spring Expression Language
-        h. authenticated()
-
-     */
-
-
-    @Autowired
-    JwtRequestFilter jwtRequestFilter;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
         http.cors(Customizer.withDefaults());
         http.csrf(AbstractHttpConfigurer::disable);
 
-        http.authorizeHttpRequests(
+        http.authorizeHttpRequests((auth) -> auth
+                // 1. RUTAS PÚBLICAS (Sin Login)
+                .requestMatchers(
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/swagger-resources/**",
+                        "/upc/users/login/**",
+                        "/upc/users/signup/**",
+                        "/upc/public/**" // <--- ¡Importante! Libera todas las rutas que empiezan con /public/
+                ).permitAll()
 
-                (auth) -> auth
-//                        .anyRequest().permitAll()
+                // 2. ARTISTAS
+                // Cualquiera autenticado puede ver listas de artistas (para contratar o colaborar)
+                .requestMatchers(HttpMethod.GET, "/upc/artistas/**").authenticated()
+                // Solo Artista o Admin pueden modificar perfil de artista
+                .requestMatchers(HttpMethod.POST, "/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_ARTISTA")
+                .requestMatchers(HttpMethod.PUT, "/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_ARTISTA")
+                .requestMatchers(HttpMethod.DELETE, "/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN")
 
-                        .requestMatchers(AUTH_WHITELIST).permitAll()
-                        //PARA ARTISTAS
-                        .requestMatchers(HttpMethod.GET,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.GET,"/upc/public/artistas/**").hasAnyAuthority("ROLE_ADMIN","ROLE_ARTISTA")
-                        //PARA RESTAURANTES
-                        .requestMatchers(HttpMethod.GET,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.PUT,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.POST,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.GET,"/upc/public/restaurantes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        //PARA EVENTOS
-                        .requestMatchers(HttpMethod.GET,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.PUT,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.POST,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.GET,"/upc/public/eventos/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        //PARA ANUNCIOS
-                        .requestMatchers(HttpMethod.GET,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.PUT,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.POST,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE")
-                        //PARA MENSAJES
-                        .requestMatchers(HttpMethod.GET,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        //PARA POSTULACIONES
-                        .requestMatchers(HttpMethod.GET,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        //PARA RESENIAS
-                        .requestMatchers(HttpMethod.GET,"/upc/resenias/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/resenias/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/resenias/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/resenias/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        //PARA PORTAFOLIOS
-                        .requestMatchers(HttpMethod.GET,"/upc/portafolios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/portafolios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/portafolios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/portafolios/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        //PARA SOPORTES
-                        .requestMatchers(HttpMethod.GET,"/upc/soportes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/soportes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/soportes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/soportes/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        //PARA NOTIFICACIONES
-                        .requestMatchers(HttpMethod.GET,"/upc/notificaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.PUT,"/upc/notificaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.POST,"/upc/notificaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .requestMatchers(HttpMethod.DELETE,"/upc/notificaciones/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RESTAURANTE","ROLE_ARTISTA")
-                        .anyRequest().authenticated()
+                // 3. RESTAURANTES
+                .requestMatchers(HttpMethod.GET, "/upc/restaurantes/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE")
+                .requestMatchers(HttpMethod.PUT, "/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE")
+                .requestMatchers(HttpMethod.DELETE, "/upc/restaurantes/**").hasAnyAuthority("ROLE_ADMIN")
 
+                // 4. EVENTOS y ANUNCIOS (Lógica de Negocio)
+                // ¡Los Artistas deben poder ver Anuncios y Eventos para postular!
+                .requestMatchers(HttpMethod.GET, "/upc/anuncios/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+                .requestMatchers(HttpMethod.GET, "/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+
+                // Creación y edición reservada a Restaurantes (dueños del evento) y Admin
+                .requestMatchers(HttpMethod.POST, "/upc/anuncios/**", "/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE")
+                .requestMatchers(HttpMethod.PUT, "/upc/anuncios/**", "/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE")
+                .requestMatchers(HttpMethod.DELETE, "/upc/anuncios/**", "/upc/eventos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE")
+
+                // 5. INTERACCIONES (Mensajes, Postulaciones)
+                .requestMatchers("/upc/mensajes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+                .requestMatchers("/upc/postulaciones/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+
+                // 6. OTROS
+                .requestMatchers("/upc/resenias/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+                .requestMatchers("/upc/portafolios/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+                .requestMatchers("/upc/notificaciones/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+                .requestMatchers("/upc/soportes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RESTAURANTE", "ROLE_ARTISTA")
+
+                // Por defecto, todo lo demás requiere autenticación
+                .anyRequest().authenticated()
         );
 
-        http.sessionManagement(
-                (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        );
+        http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
-
 }
