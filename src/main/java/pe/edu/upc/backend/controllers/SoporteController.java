@@ -3,8 +3,9 @@ package pe.edu.upc.backend.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import pe.edu.upc.backend.entities.Soporte;
+import pe.edu.upc.backend.dtos.SoporteDTO;
 import pe.edu.upc.backend.services.SoporteService;
 
 import java.util.List;
@@ -17,68 +18,36 @@ public class SoporteController {
     @Autowired
     private SoporteService soporteService;
 
-    // ---------------------- CRUD ----------------------
-
-    // Listar todos
     @GetMapping("/soportes")
-    public ResponseEntity<List<Soporte>> listAll() {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')") // Solo admin ve todos los tickets
+    public ResponseEntity<List<SoporteDTO>> listAll() {
         return new ResponseEntity<>(soporteService.listAll(), HttpStatus.OK);
     }
 
-    // Buscar por ID
     @GetMapping("/soportes/{id}")
-    public ResponseEntity<Soporte> findById(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_ARTISTA','ROLE_RESTAURANTE')")
+    public ResponseEntity<SoporteDTO> findById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(soporteService.findById(id), HttpStatus.OK);
     }
 
-    // Crear ticket de soporte
     @PostMapping("/soportes")
-    public ResponseEntity<Soporte> add(@RequestBody Soporte soporte) {
-        Soporte created = soporteService.add(soporte);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    @PreAuthorize("hasAnyAuthority('ROLE_ARTISTA','ROLE_RESTAURANTE')") // Usuarios crean tickets
+    public ResponseEntity<SoporteDTO> add(@RequestBody SoporteDTO dto) {
+        return new ResponseEntity<>(soporteService.add(dto), HttpStatus.CREATED);
     }
 
-    // Editar ticket de soporte
-    @PutMapping("/soportes")
-    public ResponseEntity<Soporte> edit(@RequestBody Soporte soporte) {
-        Soporte updated = soporteService.edit(soporte);
-        return new ResponseEntity<>(updated, HttpStatus.OK);
+    @PutMapping("/soportes/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')") // Admin responde/cierra tickets
+    public ResponseEntity<SoporteDTO> update(@PathVariable("id") Long id, @RequestBody SoporteDTO dto) {
+        return new ResponseEntity<>(soporteService.update(id, dto), HttpStatus.OK);
     }
 
-    // Eliminar ticket de soporte
     @DeleteMapping("/soportes/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") Long id) {
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         soporteService.delete(id);
-        return new ResponseEntity<>("Soporte eliminado correctamente", HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // ---------------------- QUERY METHODS ----------------------
-
-    // Buscar tickets por estado (true = abierto/cerrado según tu modelo)
-    @GetMapping("/soportes/estado/{estado}")
-    public ResponseEntity<List<Soporte>> findByEstado(@PathVariable("estado") boolean estado) {
-        return new ResponseEntity<>(soporteService.findByEstado(estado), HttpStatus.OK);
-    }
-
-    // Buscar tickets por usuario
-    @GetMapping("/soportes/usuario/{id}")
-    public ResponseEntity<List<Soporte>> findByUsuario(@PathVariable("id") Long usuarioId) {
-        return new ResponseEntity<>(soporteService.findByUsuarioId(usuarioId), HttpStatus.OK);
-    }
-
-    // ---------------------- SQL NATIVO ----------------------
-
-    // Buscar tickets por estado (SQL)
-    @GetMapping("/soportes/sql/estado/{estado}")
-    public ResponseEntity<List<Soporte>> findByEstadoSQL(@PathVariable("estado") boolean estado) {
-        return new ResponseEntity<>(soporteService.findByEstadoSQL(estado), HttpStatus.OK);
-    }
-
-    // ---------------------- JPQL ----------------------
-
-    // Buscar tickets por estado (JPQL)
-    @GetMapping("/soportes/jpql/estado/{estado}")
-    public ResponseEntity<List<Soporte>> findByEstadoJPQL(@PathVariable("estado") boolean estado) {
-        return new ResponseEntity<>(soporteService.findByEstadoJPQL(estado), HttpStatus.OK);
-    }
+    // ... endpoints de búsqueda
 }

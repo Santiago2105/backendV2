@@ -1,31 +1,16 @@
 package pe.edu.upc.backend.services;
-import pe.edu.upc.backend.entities.Soporte;
+
+import pe.edu.upc.backend.dtos.SoporteDTO;
 import java.util.List;
 
 public interface SoporteService {
-
-    // CRUD
-    Soporte add(Soporte soporte);
-
+    SoporteDTO add(SoporteDTO soporteDTO);
+    SoporteDTO update(Long id, SoporteDTO soporteDTO);
     void delete(Long id);
-
-    Soporte findById(Long id);
-
-    List<Soporte> listAll();
-
-    Soporte edit(Soporte soporte);
-
-
-    // Query Methods (del repositorio)
-    List<Soporte> findByEstado(boolean estado);
-
-    List<Soporte> findByUsuarioId(Long usuarioId);
-
-
-    // SQL Nativo
-    List<Soporte> findByEstadoSQL(boolean estado);
-
-
-    // JPQL
-    List<Soporte> findByEstadoJPQL(boolean estado);
+    SoporteDTO findById(Long id);
+    List<SoporteDTO> listAll();
+    List<SoporteDTO> findByEstado(boolean estado);
+    List<SoporteDTO> findByUsuarioId(Long usuarioId);
+    List<SoporteDTO> findByEstadoSQL(boolean estado);
+    List<SoporteDTO> findByEstadoJPQL(boolean estado);
 }
