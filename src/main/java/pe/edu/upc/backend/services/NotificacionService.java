@@ -1,36 +1,28 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Notificacion;
-
+import pe.edu.upc.backend.dtos.NotificacionDTO;
 import java.time.LocalDate;
 import java.util.List;
 
 public interface NotificacionService {
 
-    // CRUD
-    Notificacion add(Notificacion notificacion);
+    NotificacionDTO add(NotificacionDTO notificacionDTO);
+
+    NotificacionDTO update(Long id, NotificacionDTO notificacionDTO);
 
     void delete(Long id);
 
-    Notificacion findById(Long id);
+    NotificacionDTO findById(Long id);
 
-    List<Notificacion> listAll();
+    List<NotificacionDTO> listAll();
 
-    Notificacion edit(Notificacion notificacion);
+    List<NotificacionDTO> findByUsuarioId(Long usuarioId);
 
+    List<NotificacionDTO> findByLeido(boolean leido);
 
-    // Query Methods (del repositorio)
-    List<Notificacion> findByUsuarioId(Long usuarioId);
+    List<NotificacionDTO> findByFechaNotificacionBetween(LocalDate inicio, LocalDate fin);
 
-    List<Notificacion> findByLeido(boolean leido);
+    List<NotificacionDTO> findByUsuarioSQL(Long usuarioId);
 
-    List<Notificacion> findByFechaNotificacionBetween(LocalDate inicio, LocalDate fin);
-
-
-    // SQL Nativo
-    List<Notificacion> findByUsuarioSQL(Long usuarioId);
-
-
-    // JPQL
-    List<Notificacion> findByUsuarioJPQL(Long usuarioId);
+    List<NotificacionDTO> findByUsuarioJPQL(Long usuarioId);
 }

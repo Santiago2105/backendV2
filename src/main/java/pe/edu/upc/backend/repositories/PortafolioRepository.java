@@ -2,6 +2,7 @@ package pe.edu.upc.backend.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import pe.edu.upc.backend.entities.Portafolio;
 
 import java.util.List;
@@ -19,18 +20,9 @@ public interface PortafolioRepository extends JpaRepository<Portafolio, Long> {
     List<Portafolio> findByTitulo(String titulo);
 
 
-    // ----------------------------------------------------
-    // SQL NATIVO
-    // ----------------------------------------------------
+    @Query(value = "SELECT * FROM portafolios WHERE id_artistas = :id", nativeQuery = true) // Asegura que la columna en BD sea id_artistas
+    List<Portafolio> findByArtistaSQL(@Param("id") Long artistaId);
 
-    @Query(value = "SELECT * FROM portafolios WHERE artista_id = ?1", nativeQuery = true)
-    List<Portafolio> findByArtistaSQL(Long artistaId);
-
-
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
-    @Query("SELECT p FROM Portafolio p WHERE p.artista.id = ?1")
-    List<Portafolio> findByArtistaJPQL(Long artistaId);
+    @Query("SELECT p FROM Portafolio p WHERE p.artista.id = :id")
+    List<Portafolio> findByArtistaJPQL(@Param("id") Long artistaId);
 }

@@ -2,132 +2,127 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.NotificacionDTO;
 import pe.edu.upc.backend.entities.Notificacion;
+import pe.edu.upc.backend.entities.User;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
 import pe.edu.upc.backend.repositories.NotificacionRepository;
+import pe.edu.upc.backend.repositories.UserRepository;
 import pe.edu.upc.backend.services.NotificacionService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificacionServiceImpl implements NotificacionService {
 
     @Autowired
     private NotificacionRepository notificacionRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    // ----------------------------------------------------
-    // CRUD
-    // ----------------------------------------------------
+    // --- Mappers ---
+    private NotificacionDTO toDTO(Notificacion entity) {
+        if(entity == null) return null;
+        NotificacionDTO dto = new NotificacionDTO();
+        dto.setId(entity.getId());
+        dto.setMensaje(entity.getMensaje());
+        dto.setTipoNotificacion(entity.getTipoNotificacion());
+        dto.setLeido(entity.isLeido());
+        dto.setFechaNotificacion(entity.getFechaNotificacion());
+
+        if(entity.getUsuario() != null) dto.setUsuarioId(entity.getUsuario().getId());
+        return dto;
+    }
+
+    private Notificacion toEntity(NotificacionDTO dto) {
+        Notificacion entity = new Notificacion();
+        entity.setMensaje(dto.getMensaje());
+        entity.setTipoNotificacion(dto.getTipoNotificacion());
+        entity.setLeido(dto.isLeido());
+
+        if(dto.getFechaNotificacion() != null) entity.setFechaNotificacion(dto.getFechaNotificacion());
+        else entity.setFechaNotificacion(LocalDate.now());
+
+        if(dto.getUsuarioId() != null) {
+            User user = userRepository.findById(dto.getUsuarioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+            entity.setUsuario(user);
+        }
+        return entity;
+    }
+
+    private List<NotificacionDTO> toDTOList(List<Notificacion> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // --- CRUD ---
+    @Override
+    public NotificacionDTO add(NotificacionDTO dto) {
+        if (dto.getMensaje() == null || dto.getMensaje().isBlank()) throw new RequiredDataException("Mensaje requerido.");
+        if (dto.getUsuarioId() == null) throw new RequiredDataException("Usuario destino requerido.");
+
+        Notificacion entity = toEntity(dto);
+        // Al crear, por defecto no está leída
+        entity.setLeido(false);
+        return toDTO(notificacionRepository.save(entity));
+    }
 
     @Override
-    public Notificacion add(Notificacion notificacion) {
+    public NotificacionDTO update(Long id, NotificacionDTO dto) {
+        Notificacion entity = notificacionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notificación no encontrada"));
 
-        // Validación de campos requeridos
-        if (notificacion.getMensaje() == null || notificacion.getMensaje().isBlank()) {
-            throw new RequiredDataException("El mensaje de la notificación no puede ser nulo o vacío.");
-        }
-        if (notificacion.getTipoNotificacion() == null || notificacion.getTipoNotificacion().isBlank()) {
-            throw new RequiredDataException("El tipo de notificación no puede ser nulo o vacío.");
-        }
-        if (notificacion.getUsuario() == null) {
-            throw new RequiredDataException("La notificación debe estar asociada a un usuario.");
-        }
+        if(dto.getMensaje() != null) entity.setMensaje(dto.getMensaje());
+        if(dto.getTipoNotificacion() != null) entity.setTipoNotificacion(dto.getTipoNotificacion());
 
-        // Asignar fecha si no viene definida
-        if (notificacion.getFechaNotificacion() == null) {
-            notificacion.setFechaNotificacion(LocalDate.now());
-        }
+        // Actualizar estado leído
+        entity.setLeido(dto.isLeido());
 
-        return notificacionRepository.save(notificacion);
+        return toDTO(notificacionRepository.save(entity));
     }
 
     @Override
     public void delete(Long id) {
-        Notificacion notificacionFound = findById(id);
-
-        if (notificacionFound == null) {
-            throw new ResourceNotFoundException("No se encontró la notificación con id: " + id);
-        }
-
+        if(!notificacionRepository.existsById(id)) throw new ResourceNotFoundException("No encontrado");
         notificacionRepository.deleteById(id);
     }
 
     @Override
-    public Notificacion findById(Long id) {
-        return notificacionRepository.findById(id).orElse(null);
+    public NotificacionDTO findById(Long id) {
+        return toDTO(notificacionRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Notificacion> listAll() {
-        return notificacionRepository.findAll();
+    public List<NotificacionDTO> listAll() {
+        return toDTOList(notificacionRepository.findAll());
+    }
+
+    // --- Queries ---
+    @Override
+    public List<NotificacionDTO> findByUsuarioId(Long usuarioId) {
+        return toDTOList(notificacionRepository.findByUsuario_Id(usuarioId));
     }
 
     @Override
-    public Notificacion edit(Notificacion notificacion) {
-
-        Notificacion notificacionFound = findById(notificacion.getId());
-        if (notificacionFound == null) {
-            return null;
-        }
-
-        // Actualizar datos válidos
-        if (notificacion.getMensaje() != null && !notificacion.getMensaje().isBlank()) {
-            notificacionFound.setMensaje(notificacion.getMensaje());
-        }
-
-        if (notificacion.getTipoNotificacion() != null && !notificacion.getTipoNotificacion().isBlank()) {
-            notificacionFound.setTipoNotificacion(notificacion.getTipoNotificacion());
-        }
-
-        notificacionFound.setLeido(notificacion.isLeido());
-
-        if (notificacion.getFechaNotificacion() != null) {
-            notificacionFound.setFechaNotificacion(notificacion.getFechaNotificacion());
-        }
-
-        if (notificacion.getUsuario() != null) {
-            notificacionFound.setUsuario(notificacion.getUsuario());
-        }
-
-        return notificacionRepository.save(notificacionFound);
-    }
-
-    // ----------------------------------------------------
-    // QUERY METHODS
-    // ----------------------------------------------------
-
-    @Override
-    public List<Notificacion> findByUsuarioId(Long usuarioId) {
-        return notificacionRepository.findByUsuario_Id(usuarioId);
+    public List<NotificacionDTO> findByLeido(boolean leido) {
+        return toDTOList(notificacionRepository.findByLeido(leido));
     }
 
     @Override
-    public List<Notificacion> findByLeido(boolean leido) {
-        return notificacionRepository.findByLeido(leido);
+    public List<NotificacionDTO> findByFechaNotificacionBetween(LocalDate inicio, LocalDate fin) {
+        return toDTOList(notificacionRepository.findByFechaNotificacionBetween(inicio, fin));
     }
 
     @Override
-    public List<Notificacion> findByFechaNotificacionBetween(LocalDate inicio, LocalDate fin) {
-        return notificacionRepository.findByFechaNotificacionBetween(inicio, fin);
+    public List<NotificacionDTO> findByUsuarioSQL(Long usuarioId) {
+        return toDTOList(notificacionRepository.findByUsuarioSQL(usuarioId));
     }
 
-    // ----------------------------------------------------
-    // SQL NATIVO
-    // ----------------------------------------------------
-
     @Override
-    public List<Notificacion> findByUsuarioSQL(Long usuarioId) {
-        return notificacionRepository.findByUsuarioSQL(usuarioId);
-    }
-
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
-    @Override
-    public List<Notificacion> findByUsuarioJPQL(Long usuarioId) {
-        return notificacionRepository.findByUsuarioJPQL(usuarioId);
+    public List<NotificacionDTO> findByUsuarioJPQL(Long usuarioId) {
+        return toDTOList(notificacionRepository.findByUsuarioJPQL(usuarioId));
     }
 }
