@@ -2,6 +2,7 @@ package pe.edu.upc.backend.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import pe.edu.upc.backend.entities.Notificacion;
 
 import java.time.LocalDate;
@@ -17,12 +18,9 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Long
     List<Notificacion> findByFechaNotificacionBetween(LocalDate inicio, LocalDate fin);
 
 
-    // SQL Nativo
-    @Query(value = "SELECT * FROM notificaciones WHERE id_usuarios = ?1", nativeQuery = true)
-    List<Notificacion> findByUsuarioSQL(Long usuarioId);
+    @Query(value = "SELECT * FROM notificaciones WHERE id_usuarios = :id", nativeQuery = true)
+    List<Notificacion> findByUsuarioSQL(@Param("id") Long usuarioId);
 
-
-    // JPQL
-    @Query("SELECT n FROM Notificacion n WHERE n.usuario.id = ?1")
-    List<Notificacion> findByUsuarioJPQL(Long usuarioId);
+    @Query("SELECT n FROM Notificacion n WHERE n.usuario.id = :id")
+    List<Notificacion> findByUsuarioJPQL(@Param("id") Long usuarioId);
 }
