@@ -18,6 +18,5 @@ public class EventoDTO {
     private boolean realizado;
     private LocalDate fechaCreacion;
 
-    private Long artistaId;      // FK hacia Artista
     private Long restauranteId;  // FK hacia Restaurante
 }

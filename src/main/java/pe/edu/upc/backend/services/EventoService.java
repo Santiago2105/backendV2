@@ -20,8 +20,6 @@ public interface EventoService {
     // Query Methods
     List<EventoDTO> findByRestauranteId(Long restauranteId);
 
-    List<EventoDTO> findByArtistaId(Long artistaId);
-
     List<EventoDTO> findByFechaEvento(LocalDate fechaEvento);
 
     // SQL Nativo
