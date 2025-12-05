@@ -19,6 +19,10 @@ public class EventoController {
     @Autowired
     private EventoService eventoService;
 
+    // ================================
+    // CRUD
+    // ================================
+
     @GetMapping("/eventos")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
     public ResponseEntity<List<EventoDTO>> listAll() {
@@ -32,7 +36,7 @@ public class EventoController {
     }
 
     @PostMapping("/eventos")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')") // Usualmente el restaurante crea el evento
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
     public ResponseEntity<EventoDTO> add(@RequestBody EventoDTO eventoDTO) {
         EventoDTO created = eventoService.add(eventoDTO);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
@@ -46,25 +50,24 @@ public class EventoController {
     }
 
     @DeleteMapping("/eventos/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RESTAURANTE')")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         eventoService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Consultas Específicas
+    // ================================
+    // CONSULTAS ESPECÍFICAS
+    // ================================
+
     @GetMapping("/eventos/restaurante/{id}")
     public ResponseEntity<List<EventoDTO>> findByRestaurante(@PathVariable("id") Long restauranteId) {
         return new ResponseEntity<>(eventoService.findByRestauranteId(restauranteId), HttpStatus.OK);
     }
 
-    @GetMapping("/eventos/artista/{id}")
-    public ResponseEntity<List<EventoDTO>> findByArtista(@PathVariable("id") Long artistaId) {
-        return new ResponseEntity<>(eventoService.findByArtistaId(artistaId), HttpStatus.OK);
-    }
-
     @GetMapping("/eventos/fecha/{fecha}")
     public ResponseEntity<List<EventoDTO>> findByFecha(@PathVariable("fecha") String fecha) {
-        return new ResponseEntity<>(eventoService.findByFechaEvento(LocalDate.parse(fecha)), HttpStatus.OK);
+        LocalDate date = LocalDate.parse(fecha);
+        return new ResponseEntity<>(eventoService.findByFechaEvento(date), HttpStatus.OK);
     }
 }

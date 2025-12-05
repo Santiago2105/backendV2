@@ -38,11 +38,5 @@ public class Evento {
     @JoinColumn(name = "id_restaurantes")
     private Restaurante restaurante;
 
-    // RELACIÓN CON ARTISTA (Evento → Artista invitado)
-    @ToString.Exclude
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_artistas")
-    private Artista artista;
 }
 
