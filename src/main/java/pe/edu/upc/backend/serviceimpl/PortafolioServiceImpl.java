@@ -2,131 +2,133 @@ package pe.edu.upc.backend.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pe.edu.upc.backend.dtos.PortafolioDTO;
+import pe.edu.upc.backend.entities.Artista;
 import pe.edu.upc.backend.entities.Portafolio;
 import pe.edu.upc.backend.exceptions.RequiredDataException;
 import pe.edu.upc.backend.exceptions.ResourceNotFoundException;
+import pe.edu.upc.backend.repositories.ArtistaRepository;
 import pe.edu.upc.backend.repositories.PortafolioRepository;
 import pe.edu.upc.backend.services.PortafolioService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PortafolioServiceImpl implements PortafolioService {
 
     @Autowired
     private PortafolioRepository portafolioRepository;
+    @Autowired
+    private ArtistaRepository artistaRepository;
 
-    // ----------------------------------------------------
-    // CRUD
-    // ----------------------------------------------------
+    // --- Mappers ---
+    private PortafolioDTO toDTO(Portafolio entity) {
+        if (entity == null) return null;
+        PortafolioDTO dto = new PortafolioDTO();
+        dto.setId(entity.getId());
+        dto.setTitulo(entity.getTitulo());
+        dto.setTipo(entity.getTipo());
+        dto.setUrl(entity.getUrl());
+        dto.setFechaCreacion(entity.getFechaCreacion());
+
+        if (entity.getArtista() != null) {
+            dto.setArtistaId(entity.getArtista().getId());
+        }
+        return dto;
+    }
+
+    private Portafolio toEntity(PortafolioDTO dto) {
+        Portafolio entity = new Portafolio();
+        entity.setTitulo(dto.getTitulo());
+        entity.setTipo(dto.getTipo());
+        entity.setUrl(dto.getUrl());
+
+        if (dto.getFechaCreacion() != null) entity.setFechaCreacion(dto.getFechaCreacion());
+        else entity.setFechaCreacion(LocalDate.now());
+
+        if (dto.getArtistaId() != null) {
+            Artista artista = artistaRepository.findById(dto.getArtistaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Artista no encontrado id: " + dto.getArtistaId()));
+            entity.setArtista(artista);
+        }
+        return entity;
+    }
+
+    private List<PortafolioDTO> toDTOList(List<Portafolio> list) {
+        return list.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // --- CRUD ---
+    @Override
+    public PortafolioDTO add(PortafolioDTO dto) {
+        if (dto.getTitulo() == null || dto.getTitulo().isBlank()) {
+            throw new RequiredDataException("Título requerido.");
+        }
+        if (dto.getArtistaId() == null) {
+            throw new RequiredDataException("El portafolio debe pertenecer a un artista.");
+        }
+
+        Portafolio entity = toEntity(dto);
+        return toDTO(portafolioRepository.save(entity));
+    }
 
     @Override
-    public Portafolio add(Portafolio portafolio) {
+    public PortafolioDTO update(Long id, PortafolioDTO dto) {
+        Portafolio entity = portafolioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Portafolio no encontrado id: " + id));
 
-        // Validación de campos obligatorios
-        if (portafolio.getTitulo() == null || portafolio.getTitulo().isBlank()) {
-            throw new RequiredDataException("El título del portafolio no puede ser nulo o vacío.");
-        }
-        if (portafolio.getTipo() == null || portafolio.getTipo().isBlank()) {
-            throw new RequiredDataException("El tipo de portafolio no puede ser nulo o vacío.");
-        }
-        if (portafolio.getUrl() == null || portafolio.getUrl().isBlank()) {
-            throw new RequiredDataException("La URL del portafolio no puede ser nula o vacía.");
-        }
-        if (portafolio.getArtista() == null) {
-            throw new RequiredDataException("El portafolio debe estar asociado a un artista.");
-        }
+        entity.setTitulo(dto.getTitulo());
+        entity.setTipo(dto.getTipo());
+        entity.setUrl(dto.getUrl());
 
-        return portafolioRepository.save(portafolio);
+        // No cambiamos el artista usualmente en un update, pero si se requiere, agregar lógica aquí.
+
+        return toDTO(portafolioRepository.save(entity));
     }
 
     @Override
     public void delete(Long id) {
-        Portafolio portafolioFound = findById(id);
-
-        if (portafolioFound == null) {
-            throw new ResourceNotFoundException("No se encontró el portafolio con id: " + id);
+        if (!portafolioRepository.existsById(id)) {
+            throw new ResourceNotFoundException("No encontrado id: " + id);
         }
-
         portafolioRepository.deleteById(id);
     }
 
     @Override
-    public Portafolio findById(Long id) {
-        return portafolioRepository.findById(id).orElse(null);
+    public PortafolioDTO findById(Long id) {
+        return toDTO(portafolioRepository.findById(id).orElse(null));
     }
 
     @Override
-    public List<Portafolio> listAll() {
-        return portafolioRepository.findAll();
+    public List<PortafolioDTO> listAll() {
+        return toDTOList(portafolioRepository.findAll());
+    }
+
+    // --- Queries ---
+    @Override
+    public List<PortafolioDTO> findByArtistaId(Long artistaId) {
+        return toDTOList(portafolioRepository.findByArtista_Id(artistaId));
     }
 
     @Override
-    public Portafolio edit(Portafolio portafolio) {
-
-        Portafolio portafolioFound = findById(portafolio.getId());
-        if (portafolioFound == null) {
-            return null;
-        }
-
-        // Actualización de atributos
-        if (portafolio.getTitulo() != null && !portafolio.getTitulo().isBlank()) {
-            portafolioFound.setTitulo(portafolio.getTitulo());
-        }
-
-        if (portafolio.getTipo() != null && !portafolio.getTipo().isBlank()) {
-            portafolioFound.setTipo(portafolio.getTipo());
-        }
-
-        if (portafolio.getUrl() != null && !portafolio.getUrl().isBlank()) {
-            portafolioFound.setUrl(portafolio.getUrl());
-        }
-
-        if (portafolio.getFechaCreacion() != null) {
-            portafolioFound.setFechaCreacion(portafolio.getFechaCreacion());
-        }
-
-        if (portafolio.getArtista() != null) {
-            portafolioFound.setArtista(portafolio.getArtista());
-        }
-
-        return portafolioRepository.save(portafolioFound);
-    }
-
-    // ----------------------------------------------------
-    // QUERY METHODS
-    // ----------------------------------------------------
-
-    @Override
-    public List<Portafolio> findByArtistaId(Long artistaId) {
-        return portafolioRepository.findByArtista_Id(artistaId);
+    public List<PortafolioDTO> findByTipo(String tipo) {
+        return toDTOList(portafolioRepository.findByTipo(tipo));
     }
 
     @Override
-    public List<Portafolio> findByTipo(String tipo) {
-        return portafolioRepository.findByTipo(tipo);
+    public List<PortafolioDTO> findByTitulo(String titulo) {
+        return toDTOList(portafolioRepository.findByTitulo(titulo));
     }
 
     @Override
-    public List<Portafolio> findByTitulo(String titulo) {
-        return portafolioRepository.findByTitulo(titulo);
+    public List<PortafolioDTO> findByArtistaSQL(Long artistaId) {
+        return toDTOList(portafolioRepository.findByArtistaSQL(artistaId));
     }
 
-    // ----------------------------------------------------
-    // SQL NATIVO
-    // ----------------------------------------------------
-
     @Override
-    public List<Portafolio> findByArtistaSQL(Long artistaId) {
-        return portafolioRepository.findByArtistaSQL(artistaId);
-    }
-
-    // ----------------------------------------------------
-    // JPQL
-    // ----------------------------------------------------
-
-    @Override
-    public List<Portafolio> findByArtistaJPQL(Long artistaId) {
-        return portafolioRepository.findByArtistaJPQL(artistaId);
+    public List<PortafolioDTO> findByArtistaJPQL(Long artistaId) {
+        return toDTOList(portafolioRepository.findByArtistaJPQL(artistaId));
     }
 }

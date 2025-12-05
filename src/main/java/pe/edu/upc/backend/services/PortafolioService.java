@@ -1,35 +1,27 @@
 package pe.edu.upc.backend.services;
 
-import pe.edu.upc.backend.entities.Portafolio;
-
+import pe.edu.upc.backend.dtos.PortafolioDTO;
 import java.util.List;
 
 public interface PortafolioService {
 
-    // CRUD
-    Portafolio add(Portafolio portafolio);
+    PortafolioDTO add(PortafolioDTO portafolioDTO);
+
+    PortafolioDTO update(Long id, PortafolioDTO portafolioDTO);
 
     void delete(Long id);
 
-    Portafolio findById(Long id);
+    PortafolioDTO findById(Long id);
 
-    List<Portafolio> listAll();
+    List<PortafolioDTO> listAll();
 
-    Portafolio edit(Portafolio portafolio);
+    List<PortafolioDTO> findByArtistaId(Long artistaId);
 
+    List<PortafolioDTO> findByTipo(String tipo);
 
-    // Query Methods (del repositorio)
-    List<Portafolio> findByArtistaId(Long artistaId);
+    List<PortafolioDTO> findByTitulo(String titulo);
 
-    List<Portafolio> findByTipo(String tipo);
+    List<PortafolioDTO> findByArtistaSQL(Long artistaId);
 
-    List<Portafolio> findByTitulo(String titulo);
-
-
-    // SQL Nativo
-    List<Portafolio> findByArtistaSQL(Long artistaId);
-
-
-    // JPQL
-    List<Portafolio> findByArtistaJPQL(Long artistaId);
+    List<PortafolioDTO> findByArtistaJPQL(Long artistaId);
 }
