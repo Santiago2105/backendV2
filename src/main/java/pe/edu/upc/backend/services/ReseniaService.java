@@ -1,33 +1,27 @@
 package pe.edu.upc.backend.services;
-import pe.edu.upc.backend.entities.Resenia;
+
+import pe.edu.upc.backend.dtos.ReseniaDTO;
 import java.util.List;
 
 public interface ReseniaService {
 
-    // CRUD
-    Resenia add(Resenia resenia);
+    ReseniaDTO add(ReseniaDTO reseniaDTO);
+
+    ReseniaDTO update(Long id, ReseniaDTO reseniaDTO);
 
     void delete(Long id);
 
-    Resenia findById(Long id);
+    ReseniaDTO findById(Long id);
 
-    List<Resenia> listAll();
+    List<ReseniaDTO> listAll();
 
-    Resenia edit(Resenia resenia);
+    List<ReseniaDTO> findByEventoId(Long eventoId);
 
+    List<ReseniaDTO> findByArtistaId(Long artistaId);
 
-    // Query Methods (del repositorio)
-    List<Resenia> findByEventoId(Long eventoId);
+    List<ReseniaDTO> findByRestauranteId(Long restauranteId);
 
-    List<Resenia> findByArtistaId(Long artistaId);
+    List<ReseniaDTO> findByEventoSQL(Long eventoId);
 
-    List<Resenia> findByRestauranteId(Long restauranteId);
-
-
-    // SQL Nativo
-    List<Resenia> findByEventoSQL(Long eventoId);
-
-
-    // JPQL
-    List<Resenia> findByEventoJPQL(Long eventoId);
+    List<ReseniaDTO> findByEventoJPQL(Long eventoId);
 }
